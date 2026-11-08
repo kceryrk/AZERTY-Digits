@@ -5,10 +5,13 @@
 set -euo pipefail
 
 LAYOUT_NAME="AZERTY-Digits.keylayout"
+ICON_NAME="AZERTY-Digits.icns"
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 SOURCE="$SOURCE_DIR/$LAYOUT_NAME"
+SOURCE_ICON="$SOURCE_DIR/$ICON_NAME"
 DEST_DIR="$HOME/Library/Keyboard Layouts"
 DEST="$DEST_DIR/$LAYOUT_NAME"
+DEST_ICON="$DEST_DIR/$ICON_NAME"
 
 usage() {
     echo "Usage: $0 [install|update|uninstall|status]"
@@ -40,6 +43,9 @@ cmd_install() {
     fi
     mkdir -p "$DEST_DIR"
     cp "$SOURCE" "$DEST"
+    if [ -f "$SOURCE_ICON" ]; then
+        cp "$SOURCE_ICON" "$DEST_ICON"
+    fi
     echo "Installed $LAYOUT_NAME to $DEST_DIR"
     finish_note
 }
@@ -51,11 +57,10 @@ cmd_update() {
         cmd_install
         return
     fi
-    if cmp -s "$SOURCE" "$DEST"; then
-        echo "Already up to date."
-        exit 0
-    fi
     cp "$SOURCE" "$DEST"
+    if [ -f "$SOURCE_ICON" ]; then
+        cp "$SOURCE_ICON" "$DEST_ICON"
+    fi
     echo "Updated $LAYOUT_NAME in $DEST_DIR"
     finish_note
 }
@@ -65,7 +70,7 @@ cmd_uninstall() {
         echo "Not installed; nothing to remove."
         exit 0
     fi
-    rm "$DEST"
+    rm -f "$DEST" "$DEST_ICON"
     echo "Removed $DEST"
     echo ""
     echo "Also remove 'AZERTY Digits' from System Settings > Keyboard > Input Sources if it is listed."

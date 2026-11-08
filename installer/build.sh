@@ -13,10 +13,8 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 swiftc -O main.swift -o "$APP/Contents/MacOS/AZERTY-Digits-Installer"
 cp Info.plist "$APP/Contents/Info.plist"
 cp "$ROOT/AZERTY-Digits.keylayout" "$APP/Contents/Resources/"
-for style in fr 123 frpc digit; do
-    iconutil -c icns "menubar/$style.iconset" -o "menubar/$style.icns"
-done
-cp menubar/fr.icns menubar/123.icns menubar/frpc.icns menubar/digit.icns "$APP/Contents/Resources/"
+swift render-menubar-icons.swift menubar
+cp menubar/fr.icns menubar/123.icns menubar/frpc.icns menubar/dg.icns menubar/digit.icns "$APP/Contents/Resources/"
 
 ICONSET="$(mktemp -d)/AppIcon.iconset"
 mkdir -p "$ICONSET"

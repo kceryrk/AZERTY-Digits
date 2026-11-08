@@ -46,7 +46,7 @@ let menuBarStyles = [
     MenuBarStyle(title: "FR", file: "fr"),
     MenuBarStyle(title: "123", file: "123"),
     MenuBarStyle(title: "FRPC", file: "frpc"),
-    MenuBarStyle(title: "DIGIT", file: "digit"),
+    MenuBarStyle(title: "DG", file: "dg"),
 ]
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
