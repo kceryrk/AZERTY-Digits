@@ -1,5 +1,7 @@
 # AZERTY-Digits
 
+[![Support on Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/kaecr)
+
 A custom macOS keyboard layout for French AZERTY. The number row types digits without Shift or Caps Lock, in Apple's French order (1 2 3 4 6 5 _ 9 7 ° 8 0 across the row). Holding Shift gives the French symbols (& é " ' § ( - ç è ) ! à).
 
 ## Files
