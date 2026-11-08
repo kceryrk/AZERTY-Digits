@@ -17,23 +17,24 @@ func render(text: String, px: Int) -> Data {
     NSColor.clear.set()
     NSRect(x: 0, y: 0, width: s, height: s).fill()
 
-    NSColor(calibratedWhite: 0.55, alpha: 1).setFill()
-    let boxW = s * 0.96
-    let boxH = s * 0.64
+    NSColor.white.setFill()
+    let boxW = s * 1.0
+    let boxH = boxW / 1.32
     let box = NSBezierPath(
         roundedRect: NSRect(x: (s - boxW) / 2, y: (s - boxH) / 2, width: boxW, height: boxH),
-        xRadius: boxH * 0.25, yRadius: boxH * 0.25)
+        xRadius: boxH * 0.3, yRadius: boxH * 0.3)
+
     box.fill()
 
-    // Font size comes from "123" so every label has the same letter height.
+    // Letters are about half the box height, the same for every label.
     // Wider labels are squeezed horizontally to fit, never shrunk vertically.
     let probe = NSFont.systemFont(ofSize: 100, weight: .heavy)
     let capPerPoint = probe.capHeight / 100
-    let refSize = (boxH * 0.66) / capPerPoint
+    let refSize = (boxH * 0.55) / capPerPoint
     let font = NSFont.systemFont(ofSize: refSize, weight: .heavy)
     let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
     let natural = (text as NSString).size(withAttributes: attrs)
-    let scaleX = min(1, (boxW * 0.86) / natural.width)
+    let scaleX = min(1, (boxW * 0.72) / natural.width)
     let capY = s / 2 - font.capHeight / 2 + font.descender
 
     // Knock the text out of the box so the menu bar shows through, as Apple's input icons do.
