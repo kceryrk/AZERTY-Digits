@@ -82,7 +82,7 @@
             <key code="21" output="4"/>
             <key code="22" output="6"/>
             <key code="23" output="5"/>
-            <key code="24" output="_"/>
+            <key code="24" output="-"/>
             <key code="25" output="9"/>
             <key code="26" output="7"/>
             <key code="27" output="°"/>
@@ -193,7 +193,7 @@
             <key code="21" output="&#x0027;"/>
             <key code="22" output="§"/>
             <key code="23" output="("/>
-            <key code="24" output="-"/>
+            <key code="24" output="_"/>
             <key code="25" output="ç"/>
             <key code="26" output="è"/>
             <key code="27" output=")"/>
@@ -1081,7 +1081,7 @@
             <key code="21" output="4"/>
             <key code="22" output="6"/>
             <key code="23" output="5"/>
-            <key code="24" output="_"/>
+            <key code="24" output="-"/>
             <key code="25" output="9"/>
             <key code="26" output="7"/>
             <key code="27" output="°"/>
