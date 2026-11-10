@@ -10,7 +10,7 @@ APP_ICON="$ROOT/icons/green-terminal-7.png"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-swiftc -O main.swift -o "$APP/Contents/MacOS/AZERTY-Digits-Installer"
+swiftc -O Localization.swift main.swift -o "$APP/Contents/MacOS/AZERTY-Digits-Installer"
 cp Info.plist "$APP/Contents/Info.plist"
 cp "$ROOT/AZERTY-Digits.keylayout" "$APP/Contents/Resources/"
 cp Belgian.keylayout "$APP/Contents/Resources/"

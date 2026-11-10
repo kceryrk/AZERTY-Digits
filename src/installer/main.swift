@@ -554,6 +554,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var viewNotesButton: NSButton!
     var updateNowButton: NSButton!
     var currentDownloader: UpdateDownloader?
+    var languageButton: NSButton!
+    var subtitleLabel: NSTextField!
+    var iconLabelField: NSTextField!
+    var iconSubtitleField: NSTextField!
+    var flavorLabelField: NSTextField!
+    var previewLegendField: NSTextField!
+    var optionsTitleField: NSTextField!
+    var installButton: NSButton!
+    var updateButton: NSButton!
+    var uninstallButton: NSButton!
+    var settingsButton: NSButton!
+    var supportButton: NSButton!
+    var stepsField: NSTextField!
 
     var cachedReleases: [GitHubRelease] = []
     var isCheckingUpdates = false
@@ -690,15 +703,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         appVersionBadge.drawsBackground = true
         appVersionBadge.alignment = .center
 
-        let titleRow = NSStackView(views: [title, appVersionBadge, NSView()])
+        languageButton = NSButton(title: L10n.current.toggleTitle, target: self, action: #selector(toggleLanguageAction))
+        languageButton.bezelStyle = .rounded
+        languageButton.font = .systemFont(ofSize: 11, weight: .medium)
+
+        let titleRow = NSStackView(views: [title, appVersionBadge, NSView(), languageButton])
         titleRow.orientation = .horizontal
         titleRow.alignment = .firstBaseline
         titleRow.spacing = 8
 
-        let subtitle = NSTextField(wrappingLabelWithString:
-            "Digits on the number row without Shift or Caps Lock. Option, Option+Shift and the rest of Apple's French layout are unchanged.")
-        subtitle.font = .systemFont(ofSize: 12)
-        subtitle.textColor = .secondaryLabelColor
+        subtitleLabel = NSTextField(wrappingLabelWithString: L10n.subtitle)
+        subtitleLabel.font = .systemFont(ofSize: 12)
+        subtitleLabel.textColor = .secondaryLabelColor
+        let subtitle = subtitleLabel!
 
         // Icon Preview & Menu Bar Style Card
         iconPreview.imageScaling = .scaleProportionallyUpOrDown
@@ -708,14 +725,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         iconPopup.action = #selector(menuBarChanged)
         refreshMenuBarStyleItems()
 
-        let iconLabel = NSTextField(labelWithString: "Menu Bar Icon")
-        iconLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        iconLabelField = NSTextField(labelWithString: L10n.menuBarIconLabel)
+        iconLabelField.font = .systemFont(ofSize: 13, weight: .semibold)
+        let iconLabel = iconLabelField!
 
-        let iconSubtitle = NSTextField(wrappingLabelWithString: "Choose the badge shown in your macOS menu bar.")
-        iconSubtitle.font = .systemFont(ofSize: 11)
-        iconSubtitle.textColor = .secondaryLabelColor
+        iconSubtitleField = NSTextField(wrappingLabelWithString: L10n.menuBarIconSubtitle)
+        iconSubtitleField.font = .systemFont(ofSize: 11)
+        iconSubtitleField.textColor = .secondaryLabelColor
+        let iconSubtitle = iconSubtitleField!
 
-        toggleDarkIcon = NSButton(checkboxWithTitle: "Always use dark icon (black badge)", target: self, action: #selector(toggleDarkIconChanged))
+        toggleDarkIcon = NSButton(checkboxWithTitle: L10n.alwaysDarkIcon, target: self, action: #selector(toggleDarkIconChanged))
         toggleDarkIcon.font = .systemFont(ofSize: 11, weight: .medium)
         toggleDarkIcon.state = UserDefaults.standard.bool(forKey: darkIconDefaultsKey) ? .on : .off
 
@@ -739,8 +758,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         flavorPopup.target = self
         flavorPopup.action = #selector(flavorChanged)
 
-        let flavorLabel = NSTextField(labelWithString: "Layout:")
-        flavorLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        flavorLabelField = NSTextField(labelWithString: L10n.layoutLabel)
+        flavorLabelField.font = .systemFont(ofSize: 12, weight: .semibold)
+        let flavorLabel = flavorLabelField!
         let flavorRow = NSStackView(views: [flavorLabel, flavorPopup, NSView()])
         flavorRow.spacing = 8
         flavorRow.alignment = .centerY
@@ -748,15 +768,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Apple-style Keyboard Layout Preview
         keyboardPreview.translatesAutoresizingMaskIntoConstraints = false
 
-        let previewLegend = NSTextField(wrappingLabelWithString:
-            "Highlighted keys type digits by default without Shift. Hold Shift to access standard symbols.")
-        previewLegend.font = .systemFont(ofSize: 11)
-        previewLegend.textColor = .secondaryLabelColor
+        previewLegendField = NSTextField(wrappingLabelWithString: L10n.previewLegend)
+        previewLegendField.font = .systemFont(ofSize: 11)
+        previewLegendField.textColor = .secondaryLabelColor
+        let previewLegend = previewLegendField!
 
         // Install for all users (placed right below Layout picker)
         UserDefaults.standard.register(defaults: [allUsersDefaultsKey: false])
         toggleAllUsers = NSButton(
-            checkboxWithTitle: "Install for all users (Lock screen & Login window)",
+            checkboxWithTitle: L10n.installAllUsers,
             target: self,
             action: #selector(toggleAllUsersChanged))
         toggleAllUsers.font = .systemFont(ofSize: 12, weight: .medium)
@@ -770,22 +790,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         allUsersHelp.font = .systemFont(ofSize: 11)
         allUsersHelp.textColor = .secondaryLabelColor
+        allUsersHelp.stringValue = L10n.allUsersHelp
 
         // Checkboxes Section
         UserDefaults.standard.register(defaults: [underscoreDefaultsKey: false, degreeDefaultsKey: true])
-        toggleUnderscore = NSButton(checkboxWithTitle: "Include _ on the number row (key 24)", target: self, action: #selector(toggleChanged))
-        toggleDegree = NSButton(checkboxWithTitle: "Include ° on the number row (key 27)", target: self, action: #selector(toggleChanged))
+        toggleUnderscore = NSButton(checkboxWithTitle: L10n.toggleUnderscore, target: self, action: #selector(toggleChanged))
+        toggleDegree = NSButton(checkboxWithTitle: L10n.toggleDegree, target: self, action: #selector(toggleChanged))
         toggleUnderscore.font = .systemFont(ofSize: 12, weight: .medium)
         toggleDegree.font = .systemFont(ofSize: 12, weight: .medium)
         toggleUnderscore.state = UserDefaults.standard.bool(forKey: underscoreDefaultsKey) ? .on : .off
         toggleDegree.state = UserDefaults.standard.bool(forKey: degreeDefaultsKey) ? .on : .off
 
+        underscoreHelp.stringValue = L10n.underscoreHelp
+        degreeHelp.stringValue = L10n.degreeHelp
         for help in [underscoreHelp, degreeHelp] {
             help.font = .systemFont(ofSize: 11)
             help.textColor = .secondaryLabelColor
         }
 
-        let optionsTitle = NSTextField(labelWithString: "Layout Options")
+        optionsTitleField = NSTextField(labelWithString: L10n.optionsTitle)
+        optionsTitleField.font = .systemFont(ofSize: 13, weight: .semibold)
+        let optionsTitle = optionsTitleField!
         optionsTitle.font = .systemFont(ofSize: 13, weight: .semibold)
 
         optSep1 = makeSeparator()
@@ -811,25 +836,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         optionsStack.setCustomSpacing(10, after: optSep2)
 
         // Action Buttons (Row 1)
-        let install = NSButton(title: "Install", target: self, action: #selector(installAction))
-        let update = NSButton(title: "Update", target: self, action: #selector(updateAction))
-        let uninstall = NSButton(title: "Uninstall", target: self, action: #selector(uninstallAction))
-        install.bezelStyle = .rounded
-        update.bezelStyle = .rounded
-        uninstall.bezelStyle = .rounded
-        install.keyEquivalent = "\r"
+        installButton = NSButton(title: L10n.installButton, target: self, action: #selector(installAction))
+        updateButton = NSButton(title: L10n.updateButton, target: self, action: #selector(updateAction))
+        uninstallButton = NSButton(title: L10n.uninstallButton, target: self, action: #selector(uninstallAction))
+        installButton.bezelStyle = .rounded
+        updateButton.bezelStyle = .rounded
+        uninstallButton.bezelStyle = .rounded
+        installButton.keyEquivalent = "\r"
+        let install = installButton!
+        let update = updateButton!
+        let uninstall = uninstallButton!
 
         let buttons = NSStackView(views: [install, update, uninstall, NSView()])
         buttons.spacing = 10
 
         // Secondary Buttons (Row 2)
-        let settings = NSButton(title: "Open Keyboard Settings", target: self, action: #selector(openSettings))
-        settings.bezelStyle = .rounded
+        settingsButton = NSButton(title: L10n.keyboardSettingsButton, target: self, action: #selector(openSettings))
+        settingsButton.bezelStyle = .rounded
+        let settings = settingsButton!
 
-        checkUpdatesButton = NSButton(title: "Check for Updates", target: self, action: #selector(checkUpdatesAction))
+        checkUpdatesButton = NSButton(title: L10n.checkUpdatesButton, target: self, action: #selector(checkUpdatesAction))
         checkUpdatesButton.bezelStyle = .rounded
 
-        let supportButton = NSButton(title: "☕ Support on Ko-fi", target: self, action: #selector(supportAction))
+        supportButton = NSButton(title: L10n.supportButton, target: self, action: #selector(supportAction))
         supportButton.bezelStyle = .rounded
 
         let extraButtons = NSStackView(views: [settings, checkUpdatesButton, supportButton, NSView()])
@@ -838,11 +867,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Status & Update Info
         statusLabel.font = .systemFont(ofSize: 12)
 
-        viewNotesButton = NSButton(title: "Release Notes", target: self, action: #selector(viewNotesAction))
+        viewNotesButton = NSButton(title: L10n.releaseNotesButton, target: self, action: #selector(viewNotesAction))
         viewNotesButton.bezelStyle = .inline
         viewNotesButton.isHidden = true
 
-        updateNowButton = NSButton(title: "Update Now", target: self, action: #selector(startInAppUpdateFromBanner))
+        updateNowButton = NSButton(title: L10n.updateNowButton, target: self, action: #selector(startInAppUpdateFromBanner))
         updateNowButton.bezelStyle = .inline
         updateNowButton.font = .boldSystemFont(ofSize: 11)
         updateNowButton.contentTintColor = .systemBlue
@@ -856,10 +885,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         updateRow.alignment = .centerY
 
         // Help Note
-        let steps = NSTextField(wrappingLabelWithString:
-            "💡 Next steps: After install or update, log out and back in, then add AZERTY Digits in System Settings > Keyboard > Input Sources (+ > Others). macOS doesn't let apps add input sources for you.")
-        steps.font = .systemFont(ofSize: 11)
-        steps.textColor = .secondaryLabelColor
+        stepsField = NSTextField(wrappingLabelWithString: L10n.nextStepsNote)
+        stepsField.font = .systemFont(ofSize: 11)
+        stepsField.textColor = .secondaryLabelColor
+        let steps = stepsField!
 
         let sep1 = makeSeparator()
         let sep2 = makeSeparator()
@@ -979,7 +1008,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let currentIdx = (0..<menuBarStyles.count).contains(iconPopup.indexOfSelectedItem) ? iconPopup.indexOfSelectedItem : 0
         iconPopup.removeAllItems()
         for style in menuBarStyles {
-            let item = NSMenuItem(title: "\(style.title)  (\(style.subtitle))", action: nil, keyEquivalent: "")
+            let subtitle = L10n.iconSubtitleForStyle(file: style.file); let item = NSMenuItem(title: "\(style.title)  (\(subtitle.isEmpty ? style.subtitle : subtitle))", action: nil, keyEquivalent: "")
             if let url = iconURL(for: style.file), let image = NSImage(contentsOf: url) {
                 let thumb = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
                     image.draw(in: rect)
@@ -1062,7 +1091,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             underscoreHelp.isHidden = isPC
             optSep2.isHidden = isPC
             updateWindowHeight(animate: true)
-            setStatus("Selected layout: \(selectedFlavor.name). Click Install/Update to apply.")
+            setStatus(L10n.statusSelectedLayout(name: selectedFlavor.name))
         } else {
             // "Other Layout..." selected: restore previous selection in popup and open exporter sheet
             flavorPopup.selectItem(at: lastSelectedFlavorIndex)
@@ -1074,9 +1103,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let isAll = toggleAllUsers.state == .on
         UserDefaults.standard.set(isAll, forKey: allUsersDefaultsKey)
         if isAll {
-            setStatus("Install for all users selected. Click Install or Update (requires admin password).")
+            setStatus(L10n.statusInstallAllSelected)
         } else {
-            setStatus("Install for current user selected. Click Install or Update.")
+            setStatus(L10n.statusInstallUserSelected)
         }
     }
 
@@ -1088,7 +1117,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         keyboardPreview.underscore = under
         keyboardPreview.degree = deg
         keyboardPreview.needsDisplay = true
-        setStatus("Click Update to apply the new symbols.")
+        setStatus(L10n.statusClickUpdateToApply)
+    }
+
+    @objc func toggleLanguageAction() {
+        L10n.current = (L10n.current == .en) ? .fr : .en
+        applyLocalization()
+        refreshStatus()
+        updateWindowHeight(animate: true)
+    }
+
+    func applyLocalization() {
+        window.title = "\(L10n.windowTitle) (v\(getAppVersion()))"
+        languageButton.title = L10n.current.toggleTitle
+        subtitleLabel.stringValue = L10n.subtitle
+        iconLabelField.stringValue = L10n.menuBarIconLabel
+        iconSubtitleField.stringValue = L10n.menuBarIconSubtitle
+        toggleDarkIcon.title = L10n.alwaysDarkIcon
+        flavorLabelField.stringValue = L10n.layoutLabel
+        previewLegendField.stringValue = L10n.previewLegend
+        toggleAllUsers.title = L10n.installAllUsers
+        allUsersHelp.stringValue = L10n.allUsersHelp
+        toggleUnderscore.title = L10n.toggleUnderscore
+        underscoreHelp.stringValue = L10n.underscoreHelp
+        toggleDegree.title = L10n.toggleDegree
+        degreeHelp.stringValue = L10n.degreeHelp
+        optionsTitleField.stringValue = L10n.optionsTitle
+        installButton.title = L10n.installButton
+        updateButton.title = L10n.updateButton
+        uninstallButton.title = L10n.uninstallButton
+        settingsButton.title = L10n.keyboardSettingsButton
+        checkUpdatesButton.title = L10n.checkUpdatesButton
+        supportButton.title = L10n.supportButton
+        viewNotesButton.title = L10n.releaseNotesButton
+        stepsField.stringValue = L10n.nextStepsNote
+        refreshMenuBarStyleItems()
     }
 
     @objc func menuBarChanged() {
@@ -1102,11 +1165,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func refreshStatus() {
         let ver = getInstalledVersion() ?? getAppVersion()
         if isInstalledSystemWide {
-            setStatus("Keyboard layout: installed (v\(ver)) for all users (/Library/Keyboard Layouts). Available on lock screen.")
+            setStatus(L10n.statusInstalledSystem(ver: ver))
         } else if isInstalledUserLevel {
-            setStatus("Keyboard layout: installed (v\(ver)) at ~/Library/Keyboard Layouts (Current user only).")
+            setStatus(L10n.statusInstalledUser(ver: ver))
         } else {
-            setStatus("Keyboard layout: not installed.")
+            setStatus(L10n.statusNotInstalled)
         }
     }
 
@@ -1138,7 +1201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         let targetExists = toggleAllUsers.state == .on ? isInstalledSystemWide : isInstalledUserLevel
         if targetExists {
-            setStatus("Already installed. Use Update to refresh it.")
+            setStatus(L10n.statusAlreadyInstalled)
             return
         }
         copyLayout(from: source, action: "Installed")
@@ -1180,9 +1243,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if didRemove {
             uninstallThemeSyncAgent()
             UserDefaults.standard.removeObject(forKey: installedVersionDefaultsKey)
-            setStatus("Removed. Also remove AZERTY Digits from Input Sources if it's still listed.")
+            setStatus(L10n.statusRemoved)
         } else {
-            setStatus("Nothing to remove.")
+            setStatus(L10n.statusNothingToRemove)
         }
     }
 
@@ -1245,7 +1308,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                 let ver = getAppVersion()
                 UserDefaults.standard.set(ver, forKey: installedVersionDefaultsKey)
-                setStatus("\(action) \(selectedFlavor.name) (v\(ver)) for all users (/Library). Available on lock screen!")
+                setStatus(L10n.statusActionSuccessSystem(action: action, name: selectedFlavor.name, ver: ver))
             } else {
                 try FileManager.default.createDirectory(at: userInstalledDir, withIntermediateDirectories: true)
                 if FileManager.default.fileExists(atPath: userInstalledURL.path) {
@@ -1280,7 +1343,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                 let ver = getAppVersion()
                 UserDefaults.standard.set(ver, forKey: installedVersionDefaultsKey)
-                setStatus("\(action) \(selectedFlavor.name) (v\(ver)) at ~/Library/Keyboard Layouts.")
+                setStatus(L10n.statusActionSuccessUser(action: action, name: selectedFlavor.name, ver: ver))
             }
         } catch {
             setStatus("Failed: \(error.localizedDescription)")
