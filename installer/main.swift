@@ -63,6 +63,18 @@ struct SemanticVersion: Comparable, CustomStringConvertible {
 
 // MARK: - GitHub Release Model
 
+struct GitHubReleaseAsset: Codable {
+    let name: String
+    let browserDownloadUrl: String
+    let size: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case browserDownloadUrl = "browser_download_url"
+        case size
+    }
+}
+
 struct GitHubRelease: Codable {
     let tagName: String
     let name: String?
@@ -71,6 +83,7 @@ struct GitHubRelease: Codable {
     let publishedAt: String?
     let draft: Bool
     let prerelease: Bool
+    let assets: [GitHubReleaseAsset]?
 
     enum CodingKeys: String, CodingKey {
         case tagName = "tag_name"
@@ -80,6 +93,7 @@ struct GitHubRelease: Codable {
         case publishedAt = "published_at"
         case draft
         case prerelease
+        case assets
     }
 }
 
@@ -454,6 +468,65 @@ final class AppleKeyboardPreviewView: NSView {
     }
 }
 
+// MARK: - In-App Auto-Updater Engine
+
+final class UpdateDownloader: NSObject, URLSessionDownloadDelegate {
+    typealias ProgressHandler = (_ percent: Double, _ status: String) -> Void
+    typealias CompletionHandler = (Result<URL, Error>) -> Void
+
+    private var session: URLSession!
+    private var downloadTask: URLSessionDownloadTask?
+    var onProgress: ProgressHandler?
+    var onCompletion: CompletionHandler?
+
+    override init() {
+        super.init()
+        let config = URLSessionConfiguration.default
+        self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
+    }
+
+    func startDownload(url: URL) {
+        downloadTask = session.downloadTask(with: url)
+        downloadTask?.resume()
+    }
+
+    func cancel() {
+        downloadTask?.cancel()
+        downloadTask = nil
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        let downloadedMB = Double(totalBytesWritten) / 1_048_576.0
+        if totalBytesExpectedToWrite > 0 {
+            let totalMB = Double(totalBytesExpectedToWrite) / 1_048_576.0
+            let percent = (Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)) * 100.0
+            let text = String(format: "Downloading: %.1f MB / %.1f MB (%.0f%%)", downloadedMB, totalMB, percent)
+            onProgress?(percent, text)
+        } else {
+            let text = String(format: "Downloading: %.1f MB", downloadedMB)
+            onProgress?(-1.0, text)
+        }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        let destination = tempDir.appendingPathComponent("update.zip")
+        do {
+            try FileManager.default.moveItem(at: location, to: destination)
+            onCompletion?(.success(destination))
+        } catch {
+            onCompletion?(.failure(error))
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error {
+            onCompletion?(.failure(error))
+        }
+    }
+}
+
 // MARK: - App Delegate
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -471,6 +544,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var optSep2: NSBox!
     var checkUpdatesButton: NSButton!
     var viewNotesButton: NSButton!
+    var updateNowButton: NSButton!
+    var currentDownloader: UpdateDownloader?
 
     var cachedReleases: [GitHubRelease] = []
     var isCheckingUpdates = false
@@ -743,10 +818,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         viewNotesButton.bezelStyle = .inline
         viewNotesButton.isHidden = true
 
+        updateNowButton = NSButton(title: "Update Now", target: self, action: #selector(startInAppUpdateFromBanner))
+        updateNowButton.bezelStyle = .inline
+        updateNowButton.font = .boldSystemFont(ofSize: 11)
+        updateNowButton.contentTintColor = .systemBlue
+        updateNowButton.isHidden = true
+
         updateBanner.font = .systemFont(ofSize: 11)
         updateBanner.textColor = .secondaryLabelColor
 
-        let updateRow = NSStackView(views: [updateBanner, viewNotesButton, NSView()])
+        let updateRow = NSStackView(views: [updateBanner, updateNowButton, viewNotesButton, NSView()])
         updateRow.spacing = 8
         updateRow.alignment = .centerY
 
@@ -1318,12 +1399,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                     if latestSem > installedSem {
                         self.updateBanner.stringValue = "✨ New release available: \(latest.tagName)"
+                        self.updateNowButton.title = "Update to \(latest.tagName)"
+                        self.updateNowButton.isHidden = false
                         self.viewNotesButton.isHidden = false
                         if !silent {
                             self.showReleaseNotesSheet(releases: validReleases)
                         }
                     } else {
                         self.updateBanner.stringValue = "✓ Up to date (\(latest.tagName))"
+                        self.updateNowButton.isHidden = true
                         self.viewNotesButton.isHidden = false
                         if !silent {
                             self.showReleaseNotesSheet(releases: validReleases)
@@ -1394,9 +1478,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         var bottomViews: [NSView] = []
         if latestSem > installedSem, let latestRelease = releases.first {
-            let downloadButton = NSButton(title: "Download \(latestRelease.tagName)", target: self, action: #selector(downloadLatestAction(_:)))
-            downloadButton.bezelStyle = .rounded
-            bottomViews.append(downloadButton)
+            let updateButton = NSButton(title: "Update to \(latestRelease.tagName)", target: self, action: #selector(performInAppUpdateAction(_:)))
+            updateButton.bezelStyle = .rounded
+            updateButton.keyEquivalent = "\r"
+            bottomViews.append(updateButton)
         }
         bottomViews.append(closeButton)
 
@@ -1436,12 +1521,231 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    @objc func downloadLatestAction(_ sender: NSButton) {
-        if let latest = cachedReleases.first, let url = URL(string: latest.htmlUrl) {
-            NSWorkspace.shared.open(url)
-        }
+    // MARK: - In-App Auto-Updater Actions
+
+    @objc func startInAppUpdateFromBanner() {
+        guard let latest = cachedReleases.first else { return }
+        startInAppUpdate(release: latest)
+    }
+
+    @objc func performInAppUpdateAction(_ sender: NSButton) {
         if let sheet = sender.window {
             window.endSheet(sheet)
+        }
+        guard let latest = cachedReleases.first else { return }
+        startInAppUpdate(release: latest)
+    }
+
+    @objc func cancelUpdateAction(_ sender: NSButton) {
+        currentDownloader?.cancel()
+        currentDownloader = nil
+        if let sheet = sender.window {
+            window.endSheet(sheet)
+        }
+    }
+
+    func startInAppUpdate(release: GitHubRelease) {
+        if let currentSheet = window.attachedSheet {
+            window.endSheet(currentSheet)
+        }
+
+        var zipURLString: String? = nil
+        if let assets = release.assets {
+            if let asset = assets.first(where: { $0.name == "AZERTY-Digits-Installer.zip" }) {
+                zipURLString = asset.browserDownloadUrl
+            }
+        }
+        if zipURLString == nil {
+            zipURLString = "https://github.com/kceryrk/AZERTY-Digits/releases/download/\(release.tagName)/AZERTY-Digits-Installer.zip"
+        }
+
+        guard let downloadURL = URL(string: zipURLString!) else {
+            return
+        }
+
+        let sheetRect = NSRect(x: 0, y: 0, width: 440, height: 185)
+        let sheet = NSWindow(contentRect: sheetRect, styleMask: [.titled], backing: .buffered, defer: false)
+        let content = NSView(frame: sheetRect)
+        sheet.contentView = content
+
+        let header = NSTextField(labelWithString: "Updating AZERTY Digits")
+        header.font = .boldSystemFont(ofSize: 16)
+
+        let subtitle = NSTextField(labelWithString: "Downloading update \(release.tagName)...")
+        subtitle.font = .systemFont(ofSize: 12)
+        subtitle.textColor = .secondaryLabelColor
+
+        let progressBar = NSProgressIndicator()
+        progressBar.style = .bar
+        progressBar.isIndeterminate = false
+        progressBar.minValue = 0.0
+        progressBar.maxValue = 100.0
+        progressBar.doubleValue = 0.0
+        progressBar.translatesAutoresizingMaskIntoConstraints = false
+
+        let statusLabel = NSTextField(labelWithString: "Connecting to GitHub...")
+        statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        statusLabel.textColor = .secondaryLabelColor
+
+        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelUpdateAction(_:)))
+        cancelButton.bezelStyle = .rounded
+
+        let buttonRow = NSStackView(views: [NSView(), cancelButton])
+        buttonRow.orientation = .horizontal
+        buttonRow.distribution = .fill
+        buttonRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = NSStackView(views: [header, subtitle, progressBar, statusLabel, buttonRow])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 10
+        stack.edgeInsets = NSEdgeInsets(top: 20, left: 24, bottom: 20, right: 24)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: content.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            progressBar.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            buttonRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
+        ])
+
+        window.beginSheet(sheet, completionHandler: nil)
+
+        let downloader = UpdateDownloader()
+        self.currentDownloader = downloader
+
+        downloader.onProgress = { percent, status in
+            DispatchQueue.main.async {
+                if percent >= 0 {
+                    progressBar.isIndeterminate = false
+                    progressBar.doubleValue = percent
+                } else {
+                    progressBar.isIndeterminate = true
+                    progressBar.startAnimation(nil)
+                }
+                statusLabel.stringValue = status
+            }
+        }
+
+        downloader.onCompletion = { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let downloadedZip):
+                    progressBar.isIndeterminate = true
+                    progressBar.startAnimation(nil)
+                    statusLabel.stringValue = "Extracting and installing update..."
+                    cancelButton.isEnabled = false
+
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        self.applyUpdateAndRelaunch(zipURL: downloadedZip, sheet: sheet)
+                    }
+                case .failure(let error):
+                    if (error as NSError).code == NSURLErrorCancelled {
+                        self.window.endSheet(sheet)
+                    } else {
+                        statusLabel.stringValue = "Update failed: \(error.localizedDescription)"
+                        cancelButton.title = "Close"
+                    }
+                }
+            }
+        }
+
+        downloader.startDownload(url: downloadURL)
+    }
+
+    func applyUpdateAndRelaunch(zipURL: URL, sheet: NSWindow) {
+        let tempDir = zipURL.deletingLastPathComponent()
+        let extractDir = tempDir.appendingPathComponent("extracted")
+        try? FileManager.default.createDirectory(at: extractDir, withIntermediateDirectories: true)
+
+        let ditto = Process()
+        ditto.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        ditto.arguments = ["-xk", zipURL.path, extractDir.path]
+        do {
+            try ditto.run()
+            ditto.waitUntilExit()
+        } catch {
+            DispatchQueue.main.async {
+                let alert = NSAlert(error: error)
+                alert.messageText = "Failed to extract update package."
+                alert.beginSheetModal(for: sheet)
+            }
+            return
+        }
+
+        let newAppURL = extractDir.appendingPathComponent("AZERTY Digits Installer.app")
+        guard FileManager.default.fileExists(atPath: newAppURL.path) else {
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "Update package is missing application bundle."
+                alert.beginSheetModal(for: sheet)
+            }
+            return
+        }
+
+        // Update installed keyboard layout if currently active
+        let userLayout = userInstalledURL
+        let systemLayout = systemInstalledURL
+        let bundledKeylayout = newAppURL.appendingPathComponent("Contents/Resources/AZERTY-Digits.keylayout")
+        if FileManager.default.fileExists(atPath: userLayout.path) && FileManager.default.fileExists(atPath: bundledKeylayout.path) {
+            try? FileManager.default.removeItem(at: userLayout)
+            try? FileManager.default.copyItem(at: bundledKeylayout, to: userLayout)
+        }
+        if FileManager.default.fileExists(atPath: systemLayout.path) && FileManager.default.fileExists(atPath: bundledKeylayout.path) {
+            let cmd = "cp \"\(bundledKeylayout.path)\" \"\(systemLayout.path)\""
+            try? self.runAsAdmin(cmd)
+        }
+
+        let currentAppURL = Bundle.main.bundleURL
+        let pid = ProcessInfo.processInfo.processIdentifier
+
+        let relaunchScript = """
+        #!/bin/sh
+        PID=\(pid)
+        SOURCE="\(newAppURL.path)"
+        TARGET="\(currentAppURL.path)"
+        TEMPDIR="\(tempDir.path)"
+
+        while kill -0 "$PID" 2>/dev/null; do
+            sleep 0.1
+        done
+
+        rm -rf "$TARGET"
+        cp -R "$SOURCE" "$TARGET"
+        xattr -d com.apple.quarantine "$TARGET" 2>/dev/null || true
+        open "$TARGET"
+
+        rm -rf "$TEMPDIR"
+        rm -f "$0"
+        """
+
+        let scriptURL = tempDir.appendingPathComponent("relaunch.sh")
+        do {
+            try relaunchScript.write(to: scriptURL, atomically: true, encoding: .utf8)
+            let chmod = Process()
+            chmod.executableURL = URL(fileURLWithPath: "/bin/chmod")
+            chmod.arguments = ["+x", scriptURL.path]
+            try chmod.run()
+            chmod.waitUntilExit()
+
+            let relauncher = Process()
+            relauncher.executableURL = URL(fileURLWithPath: "/bin/sh")
+            relauncher.arguments = [scriptURL.path]
+            try relauncher.run()
+
+            DispatchQueue.main.async {
+                NSApp.terminate(nil)
+            }
+        } catch {
+            DispatchQueue.main.async {
+                let alert = NSAlert(error: error)
+                alert.messageText = "Failed to relaunch new version."
+                alert.beginSheetModal(for: sheet)
+            }
         }
     }
 
