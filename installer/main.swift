@@ -780,15 +780,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stack.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(stack)
 
-        let bottomEqual = stack.bottomAnchor.constraint(equalTo: content.bottomAnchor)
+        let bottomEqual = stack.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -18)
         bottomEqual.priority = .defaultLow
-        let bottomLess = stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor)
+        let bottomLess = stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -18)
         bottomLess.priority = .required
 
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: content.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -24),
+            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
             bottomEqual,
             bottomLess,
             subtitle.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
@@ -840,7 +840,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             frame.size.height = frameHeight
             window.setFrame(frame, display: true, animate: animate)
         }
-        window.minSize = NSSize(width: 480, height: frameHeight)
+        window.minSize = NSSize(width: 500, height: frameHeight)
         window.maxSize = NSSize(width: 1200, height: 2000)
     }
 
