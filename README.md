@@ -23,13 +23,19 @@
 
 ## Screenshots & Preview
 
-<!-- Place your screenshots or demo GIFs in the ./media folder -->
 <p align="center">
-  <img src="media/installer-preview.png" alt="AZERTY Digits Installer Preview" width="700" />
+  <img src="media/installer-preview.png" alt="AZERTY Digits Installer Preview" width="680" />
 </p>
 
-> [!TIP]
-> **Add your media here:** Drop your screenshots and animated GIFs into the [`./media/`](./media) folder (e.g. `media/installer-preview.png`, `media/menubar-demo.gif`).
+<p align="center">
+  <img src="media/menubar-badge-preview.png" alt="macOS Menu Bar Input Badge" width="320" />
+</p>
+
+<p align="center">
+  <img src="media/menubar-icon-styles.png" alt="Menu Bar Badges and Single Letter Styles" width="340" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="media/custom-layout-converter.png" alt="Custom Layout Exporter & Converter" width="340" />
+</p>
 
 ---
 
