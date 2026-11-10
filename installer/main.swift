@@ -26,6 +26,7 @@ let menuBarDefaultsKey = "menuBarStyleIndex"
 let baseLayoutDefaultsKey = "baseLayoutFlavorIndex"
 let underscoreDefaultsKey = "includeUnderscore"
 let degreeDefaultsKey = "includeDegree"
+let darkIconDefaultsKey = "alwaysUseDarkIcon"
 let installedVersionDefaultsKey = "installedLayoutVersion"
 let kofiURLString = "https://ko-fi.com/kaecr"
 let githubReleasesURLString = "https://api.github.com/repos/kceryrk/AZERTY-Digits/releases"
@@ -220,11 +221,17 @@ struct MenuBarStyle {
 }
 
 let menuBarStyles = [
-    MenuBarStyle(title: "FR", subtitle: "France", file: "fr"),
-    MenuBarStyle(title: "BE", subtitle: "Belgium", file: "be"),
-    MenuBarStyle(title: "LU", subtitle: "Luxembourg", file: "lu"),
-    MenuBarStyle(title: "MA", subtitle: "Morocco", file: "ma"),
-    MenuBarStyle(title: "DZ", subtitle: "Algeria", file: "dz"),
+    MenuBarStyle(title: "FR", subtitle: "France (2 letters)", file: "fr"),
+    MenuBarStyle(title: "BE", subtitle: "Belgium (2 letters)", file: "be"),
+    MenuBarStyle(title: "F", subtitle: "France (1 letter)", file: "f"),
+    MenuBarStyle(title: "B", subtitle: "Belgium (1 letter)", file: "b"),
+    MenuBarStyle(title: ">_", subtitle: "AZERTY Digits App Icon", file: "app"),
+    MenuBarStyle(title: "LU", subtitle: "Luxembourg (2 letters)", file: "lu"),
+    MenuBarStyle(title: "L", subtitle: "Luxembourg (1 letter)", file: "l"),
+    MenuBarStyle(title: "MA", subtitle: "Morocco (2 letters)", file: "ma"),
+    MenuBarStyle(title: "M", subtitle: "Morocco (1 letter)", file: "m"),
+    MenuBarStyle(title: "DZ", subtitle: "Algeria (2 letters)", file: "dz"),
+    MenuBarStyle(title: "D", subtitle: "Algeria (1 letter)", file: "d"),
     MenuBarStyle(title: "DG", subtitle: "Digits", file: "dg"),
     MenuBarStyle(title: "123", subtitle: "Numeric", file: "123"),
     MenuBarStyle(title: "FRPC", subtitle: "French PC", file: "frpc"),
@@ -538,6 +545,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let iconPreview = NSImageView()
     let keyboardPreview = AppleKeyboardPreviewView()
     var toggleAllUsers: NSButton!
+    var toggleDarkIcon: NSButton!
     var toggleUnderscore: NSButton!
     var toggleDegree: NSButton!
     var optSep1: NSBox!
@@ -707,7 +715,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         iconSubtitle.font = .systemFont(ofSize: 11)
         iconSubtitle.textColor = .secondaryLabelColor
 
-        let iconControls = NSStackView(views: [iconLabel, iconPopup, iconSubtitle])
+        toggleDarkIcon = NSButton(checkboxWithTitle: "Always use dark icon (black badge)", target: self, action: #selector(toggleDarkIconChanged))
+        toggleDarkIcon.font = .systemFont(ofSize: 11, weight: .medium)
+        toggleDarkIcon.state = UserDefaults.standard.bool(forKey: darkIconDefaultsKey) ? .on : .off
+
+        let iconControls = NSStackView(views: [iconLabel, iconPopup, iconSubtitle, toggleDarkIcon])
         iconControls.orientation = .vertical
         iconControls.alignment = .leading
         iconControls.spacing = 5
@@ -941,8 +953,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
+    var alwaysUseDarkIcon: Bool {
+        UserDefaults.standard.bool(forKey: darkIconDefaultsKey)
+    }
+
     func iconURL(for file: String, forceBlack: Bool? = nil) -> URL? {
-        let useBlack = forceBlack ?? !isSystemDark
+        let useBlack = forceBlack ?? (alwaysUseDarkIcon || !isSystemDark)
         let suffix = useBlack ? "-black" : ""
         if let u = Bundle.main.url(forResource: "\(file)\(suffix)", withExtension: "icns") {
             return u
@@ -999,6 +1015,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    @objc func toggleDarkIconChanged() {
+        let isDark = toggleDarkIcon.state == .on
+        UserDefaults.standard.set(isDark, forKey: darkIconDefaultsKey)
+        refreshMenuBarStyleItems()
+        updateIconPreview()
+        syncInstalledIconIfNeeded()
+        // Reinstall theme sync agent so background script respects the setting
+        if isInstalledSystemWide {
+            installThemeSyncAgent(targetDir: systemInstalledDir)
+        } else if isInstalledUserLevel {
+            installThemeSyncAgent(targetDir: userInstalledDir)
+        }
+        setStatus("Icon preference saved: \(isDark ? "Always use dark (black) badge" : "Automatic (matches Dark/Light Mode)").")
+    }
+
     func syncInstalledIconIfNeeded() {
         let targets = [
             (isInstalledSystemWide, systemInstalledDir),
@@ -1009,7 +1040,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let blackTarget = dir.appendingPathComponent(".AZERTY-Digits-black.icns")
             let activeTarget = dir.appendingPathComponent("AZERTY-Digits.icns")
 
-            let source = isSystemDark ? whiteTarget : blackTarget
+            let source = (alwaysUseDarkIcon || !isSystemDark) ? blackTarget : whiteTarget
             if FileManager.default.fileExists(atPath: source.path) {
                 try? FileManager.default.removeItem(at: activeTarget)
                 try? FileManager.default.copyItem(at: source, to: activeTarget)
@@ -1165,7 +1196,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
             let whiteIcon = iconURL(for: selectedStyle.file, forceBlack: false)
             let blackIcon = iconURL(for: selectedStyle.file, forceBlack: true)
-            let activeSource = (isSystemDark ? whiteIcon : blackIcon) ?? whiteIcon
+            let activeSource = ((alwaysUseDarkIcon || !isSystemDark) ? blackIcon : whiteIcon) ?? whiteIcon
 
             let isAllUsers = toggleAllUsers.state == .on
 
@@ -1269,9 +1300,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func installThemeSyncAgent(targetDir: URL) {
         let script = """
         #!/bin/sh
+        ALWAYS_DARK=$(defaults read com.kceryrk.azerty-digits \(darkIconDefaultsKey) 2>/dev/null || echo "0")
         STYLE=$(defaults read -g AppleInterfaceStyle 2>/dev/null || echo "Light")
         DIR="\(targetDir.path)"
-        if [ "$STYLE" = "Dark" ]; then
+        if [ "$ALWAYS_DARK" = "1" ] || [ "$ALWAYS_DARK" = "true" ] || [ "$ALWAYS_DARK" = "YES" ]; then
+            [ -f "$DIR/.AZERTY-Digits-black.icns" ] && cp -f "$DIR/.AZERTY-Digits-black.icns" "$DIR/AZERTY-Digits.icns" 2>/dev/null
+        elif [ "$STYLE" = "Dark" ]; then
             [ -f "$DIR/.AZERTY-Digits-white.icns" ] && cp -f "$DIR/.AZERTY-Digits-white.icns" "$DIR/AZERTY-Digits.icns" 2>/dev/null
         else
             [ -f "$DIR/.AZERTY-Digits-black.icns" ] && cp -f "$DIR/.AZERTY-Digits-black.icns" "$DIR/AZERTY-Digits.icns" 2>/dev/null
