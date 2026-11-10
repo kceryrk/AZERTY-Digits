@@ -239,6 +239,7 @@ final class AppleKeyboardPreviewView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let isPC = (flavorIndex == 2)
 
         // Background container in Apple's subtle gray keyboard recessed well style
         let bgPath = NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8)
@@ -278,13 +279,13 @@ final class AppleKeyboardPreviewView: NSView {
             sym6 = "-"; sym8 = "_"
         }
 
-        let base24 = underscore ? "_" : (flavorIndex == 2 ? "=" : "-")
-        let shift24 = underscore ? "_" : (flavorIndex == 2 ? "+" : "_")
+        let base24 = isPC ? "=" : (underscore ? "_" : "-")
+        let shift24 = isPC ? "+" : (underscore ? "_" : "_")
         let base27 = degree ? "°" : ")"
         let shift27 = degree ? ")" : "°"
 
         let row1: [KeyDef] = [
-            KeyDef(labelTop: nil, labelBottom: "@", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: isPC ? "²" : "#", labelBottom: isPC ? "" : "@", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: "&", labelBottom: "1", widthUnits: 1.0, isHighlighted: true),
             KeyDef(labelTop: "é", labelBottom: "2", widthUnits: 1.0, isHighlighted: true),
             KeyDef(labelTop: "\"", labelBottom: "3", widthUnits: 1.0, isHighlighted: true),
@@ -296,7 +297,7 @@ final class AppleKeyboardPreviewView: NSView {
             KeyDef(labelTop: "ç", labelBottom: "9", widthUnits: 1.0, isHighlighted: true),
             KeyDef(labelTop: "à", labelBottom: "0", widthUnits: 1.0, isHighlighted: true),
             KeyDef(labelTop: shift27, labelBottom: base27, widthUnits: 1.0, isHighlighted: degree),
-            KeyDef(labelTop: shift24, labelBottom: base24, widthUnits: 1.0, isHighlighted: underscore),
+            KeyDef(labelTop: shift24, labelBottom: base24, widthUnits: 1.0, isHighlighted: !isPC && underscore),
             KeyDef(labelTop: nil, labelBottom: "⌫", widthUnits: 1.0, isHighlighted: false),
         ]
 
@@ -313,8 +314,8 @@ final class AppleKeyboardPreviewView: NSView {
             KeyDef(labelTop: nil, labelBottom: "O", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: nil, labelBottom: "P", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: "¨", labelBottom: "^", widthUnits: 1.0, isHighlighted: false),
-            KeyDef(labelTop: "*", labelBottom: "$", widthUnits: 1.0, isHighlighted: false),
-            KeyDef(labelTop: nil, labelBottom: "`", widthUnits: 0.6, isHighlighted: false),
+            KeyDef(labelTop: isPC ? "£" : "*", labelBottom: "$", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: isPC ? "µ" : nil, labelBottom: isPC ? "*" : "`", widthUnits: 0.6, isHighlighted: false),
         ]
 
         let row3: [KeyDef] = [
@@ -330,6 +331,7 @@ final class AppleKeyboardPreviewView: NSView {
             KeyDef(labelTop: nil, labelBottom: "L", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: nil, labelBottom: "M", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: "%", labelBottom: "ù", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: isPC ? "*" : "¤", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: nil, labelBottom: "↩", widthUnits: 1.3, isHighlighted: false),
         ]
 
@@ -345,7 +347,7 @@ final class AppleKeyboardPreviewView: NSView {
             KeyDef(labelTop: "?", labelBottom: ",", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: ".", labelBottom: ";", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: "/", labelBottom: ":", widthUnits: 1.0, isHighlighted: false),
-            KeyDef(labelTop: nil, labelBottom: "=", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: isPC ? "§" : "+", labelBottom: isPC ? "!" : "=", widthUnits: 1.0, isHighlighted: false),
             KeyDef(labelTop: nil, labelBottom: "⇧", widthUnits: 1.75, isHighlighted: false),
         ]
 
@@ -400,17 +402,16 @@ final class AppleKeyboardPreviewView: NSView {
                     keyPath.stroke()
                 }
 
-                // Draw labels
+                // Draw labels: Shift character at top-left
                 if let top = key.labelTop {
                     let topColor = key.isHighlighted
                         ? (isDark ? NSColor.controlAccentColor.blended(withFraction: 0.3, of: .white)! : NSColor.controlAccentColor)
                         : (isDark ? NSColor(white: 0.65, alpha: 1.0) : NSColor(white: 0.5, alpha: 1.0))
                     let topAttrs: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 8, weight: .regular),
+                        .font: NSFont.systemFont(ofSize: 7.5, weight: .regular),
                         .foregroundColor: topColor
                     ]
-                    let topSize = top.size(withAttributes: topAttrs)
-                    let topPt = NSPoint(x: keyRect.midX - topSize.width / 2, y: keyRect.minY + 1.5)
+                    let topPt = NSPoint(x: keyRect.minX + 3.0, y: keyRect.minY + 1.5)
                     top.draw(at: topPt, withAttributes: topAttrs)
 
                     let botColor = key.isHighlighted
@@ -545,6 +546,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         keyboardPreview.underscore = toggleUnderscore.state == .on
         keyboardPreview.degree = toggleDegree.state == .on
         keyboardPreview.needsDisplay = true
+        let isPC = (lastSelectedFlavorIndex == 2)
+        toggleUnderscore.isHidden = isPC
+        underscoreHelp.isHidden = isPC
         refreshStatus()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -872,6 +876,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             selectMenuBarStyle(index: recommendedIcon)
             keyboardPreview.flavorIndex = idx
             keyboardPreview.needsDisplay = true
+            let isPC = (idx == 2)
+            toggleUnderscore.isHidden = isPC
+            underscoreHelp.isHidden = isPC
             setStatus("Selected layout: \(selectedFlavor.name). Click Install/Update to apply.")
         } else {
             // "Other Layout..." selected: restore previous selection in popup and open exporter sheet
