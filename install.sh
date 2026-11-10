@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs, updates or removes the AZERTY Digits keyboard layout for the current user.
-# Usage: ./install.sh [install|update|uninstall|status]
+# Usage: ./install.sh [install|update|uninstall|status|check-update]
 
 set -euo pipefail
 
@@ -14,11 +14,12 @@ DEST="$DEST_DIR/$LAYOUT_NAME"
 DEST_ICON="$DEST_DIR/$ICON_NAME"
 
 usage() {
-    echo "Usage: $0 [install|update|uninstall|status]"
-    echo "  install    Copy the layout into ~/Library/Keyboard Layouts"
-    echo "  update     Copy the layout again if the project file has changed"
-    echo "  uninstall  Remove the layout from ~/Library/Keyboard Layouts"
-    echo "  status     Show whether the installed layout matches the project file"
+    echo "Usage: $0 [install|update|uninstall|status|check-update]"
+    echo "  install       Copy the layout into ~/Library/Keyboard Layouts"
+    echo "  update        Copy the layout again if the project file has changed"
+    echo "  uninstall     Remove the layout from ~/Library/Keyboard Layouts"
+    echo "  status        Show whether the installed layout matches the project file"
+    echo "  check-update  Check GitHub for the latest release"
 }
 
 require_source() {
@@ -86,10 +87,23 @@ cmd_status() {
     fi
 }
 
+cmd_check_update() {
+    echo "Checking for latest release on GitHub..."
+    local latest
+    latest="$(curl -s -H "User-Agent: AZERTY-Digits" https://api.github.com/repos/kceryrk/AZERTY-Digits/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)"
+    if [ -n "$latest" ]; then
+        echo "Latest release: $latest"
+        echo "Release page: https://github.com/kceryrk/AZERTY-Digits/releases/tag/$latest"
+    else
+        echo "Could not fetch release info from GitHub."
+    fi
+}
+
 case "${1:-}" in
-    install)   cmd_install ;;
-    update)    cmd_update ;;
-    uninstall) cmd_uninstall ;;
-    status)    cmd_status ;;
-    *)         usage; exit 1 ;;
+    install)      cmd_install ;;
+    update)       cmd_update ;;
+    uninstall)    cmd_uninstall ;;
+    status)       cmd_status ;;
+    check-update) cmd_check_update ;;
+    *)            usage; exit 1 ;;
 esac
