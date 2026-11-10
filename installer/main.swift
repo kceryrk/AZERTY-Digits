@@ -664,7 +664,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "AZERTY Digits Installer"
+        window.title = "AZERTY Digits Installer (v\(getAppVersion()))"
         window.center()
         window.delegate = self
 
@@ -674,6 +674,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Header
         let title = NSTextField(labelWithString: "AZERTY Digits")
         title.font = .boldSystemFont(ofSize: 22)
+
+        let appVersionBadge = NSTextField(labelWithString: "v\(getAppVersion())")
+        appVersionBadge.font = .systemFont(ofSize: 11, weight: .semibold)
+        appVersionBadge.textColor = .secondaryLabelColor
+        appVersionBadge.backgroundColor = NSColor.quaternaryLabelColor
+        appVersionBadge.drawsBackground = true
+        appVersionBadge.alignment = .center
+
+        let titleRow = NSStackView(views: [title, appVersionBadge, NSView()])
+        titleRow.orientation = .horizontal
+        titleRow.alignment = .firstBaseline
+        titleRow.spacing = 8
 
         let subtitle = NSTextField(wrappingLabelWithString:
             "Digits on the number row without Shift or Caps Lock. Option, Option+Shift and the rest of Apple's French layout are unchanged.")
@@ -842,7 +854,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sep3 = makeSeparator()
 
         let stack = NSStackView(views: [
-            title, subtitle,
+            titleRow, subtitle,
             sep1,
             iconSection,
             sep2,
@@ -1059,11 +1071,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func refreshStatus() {
         let ver = getInstalledVersion() ?? getAppVersion()
         if isInstalledSystemWide {
-            setStatus("Installed (v\(ver)) for all users (/Library/Keyboard Layouts). Available on lock screen.")
+            setStatus("Keyboard layout: installed (v\(ver)) for all users (/Library/Keyboard Layouts). Available on lock screen.")
         } else if isInstalledUserLevel {
-            setStatus("Installed (v\(ver)) at ~/Library/Keyboard Layouts (Current user only).")
+            setStatus("Keyboard layout: installed (v\(ver)) at ~/Library/Keyboard Layouts (Current user only).")
         } else {
-            setStatus("Not installed.")
+            setStatus("Keyboard layout: not installed.")
         }
     }
 
