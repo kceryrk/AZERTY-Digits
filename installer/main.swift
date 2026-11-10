@@ -589,7 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func getAppVersion() -> String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.1"
     }
 
     func getInstalledVersion() -> String? {
@@ -1705,14 +1705,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             statusLabel.stringValue = "Relaunching AZERTY Digits (3/3)..."
         }
 
-        let currentAppURL = Bundle.main.bundleURL
+        var targetURL = Bundle.main.bundleURL
+        if targetURL.path.hasPrefix("/Volumes/") || !FileManager.default.isWritableFile(atPath: targetURL.deletingLastPathComponent().path) {
+            targetURL = URL(fileURLWithPath: "/Applications/AZERTY Digits Installer.app")
+        }
         let pid = ProcessInfo.processInfo.processIdentifier
 
         let relaunchScript = """
         #!/bin/sh
         PID=\(pid)
         SOURCE="\(newAppURL.path)"
-        TARGET="\(currentAppURL.path)"
+        TARGET="\(targetURL.path)"
         TEMPDIR="\(tempDir.path)"
 
         while kill -0 "$PID" 2>/dev/null; do
@@ -1743,7 +1746,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             try relauncher.run()
 
             DispatchQueue.main.async {
-                NSApp.terminate(nil)
+                exit(0)
             }
         } catch {
             DispatchQueue.main.async {

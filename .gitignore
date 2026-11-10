@@ -2,3 +2,4 @@
 *.DS_Store
 installer/AZERTY Digits Installer.app/
 *.zip
+*.dmg
