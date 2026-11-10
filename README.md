@@ -13,14 +13,18 @@ The number row types digits by default, in Apple's French order (1 2 3 4 6 5 _ 9
 
 ## Install, update, remove
 
-Run [install.sh](./install.sh) from this folder:
+Run [install.sh](./install.sh) from this folder or use the graphical **AZERTY Digits Installer.app**:
 
 ```
-./install.sh install     # copy the layout to ~/Library/Keyboard Layouts
-./install.sh update      # copy again if AZERTY-Digits.keylayout has changed
-./install.sh uninstall   # remove the layout
-./install.sh status      # show whether the installed copy matches this folder
+./install.sh install              # copy the layout to ~/Library/Keyboard Layouts
+./install.sh install --all-users  # copy to /Library/Keyboard Layouts (Lock screen & Login window)
+./install.sh update               # copy again if AZERTY-Digits.keylayout has changed
+./install.sh uninstall            # remove the layout
+./install.sh status               # show whether the installed copy matches this folder
 ```
+
+> [!TIP]
+> **Lock Screen & Login Window:** To type numbers without Shift when logged out or entering your PIN code/password on the macOS lock screen, install for all users (`/Library/Keyboard Layouts`). This requires administrator privileges.
 
 After `install` or `update`, log out and back in (or restart). Then add it in System Settings > Keyboard > Input Sources > **+** > Others > **AZERTY Digits**, and switch to it from the menu bar.
 
