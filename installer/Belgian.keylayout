@@ -192,13 +192,13 @@
             <key code="19" output="é"/>
             <key code="20" output="&#x0022;"/>
             <key code="21" output="&#x0027;"/>
-            <key code="22" output="§"/>
+            <key code="22" output="-"/>
             <key code="23" output="("/>
             <key code="24" output="_"/>
             <key code="25" output="ç"/>
             <key code="26" output="è"/>
             <key code="27" output=")"/>
-            <key code="28" output="!"/>
+            <key code="28" output="_"/>
             <key code="29" output="à"/>
             <key code="30" output="*"/>
             <key code="31" action="a5"/>
@@ -969,13 +969,13 @@
             <key code="19" output="é"/>
             <key code="20" output="&#x0022;"/>
             <key code="21" output="&#x0027;"/>
-            <key code="22" output="§"/>
+            <key code="22" output="-"/>
             <key code="23" output="("/>
             <key code="24" output="-"/>
             <key code="25" output="ç"/>
             <key code="26" output="è"/>
             <key code="27" output=")"/>
-            <key code="28" output="!"/>
+            <key code="28" output="_"/>
             <key code="29" output="à"/>
             <key code="30" output="$"/>
             <key code="31" action="a14"/>
