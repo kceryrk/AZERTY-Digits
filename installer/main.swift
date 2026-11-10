@@ -593,12 +593,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func getInstalledVersion() -> String? {
-        if let stored = UserDefaults.standard.string(forKey: installedVersionDefaultsKey), !stored.isEmpty {
-            return stored
-        }
         let checkURL = isInstalledSystemWide ? systemInstalledURL : userInstalledURL
         guard FileManager.default.fileExists(atPath: checkURL.path) else {
             return nil
+        }
+        if let stored = UserDefaults.standard.string(forKey: installedVersionDefaultsKey), !stored.isEmpty {
+            return stored
         }
         if let content = try? String(contentsOf: checkURL, encoding: .utf8) {
             let pattern = #"<!--\s*version="([^"]+)"\s*-->"#
@@ -610,7 +610,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 return v
             }
         }
-        return "1.0.0"
+        return getAppVersion()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -1393,11 +1393,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         return
                     }
 
-                    let installed = self.getInstalledVersion() ?? self.getAppVersion()
-                    let installedSem = SemanticVersion(installed)
+                    let currentApp = self.getAppVersion()
+                    let currentAppSem = SemanticVersion(currentApp)
                     let latestSem = SemanticVersion(latest.tagName)
 
-                    if latestSem > installedSem {
+                    if latestSem > currentAppSem {
                         self.updateBanner.stringValue = "✨ New release available: \(latest.tagName)"
                         self.updateNowButton.title = "Update to \(latest.tagName)"
                         self.updateNowButton.isHidden = false
@@ -1406,7 +1406,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                             self.showReleaseNotesSheet(releases: validReleases)
                         }
                     } else {
-                        self.updateBanner.stringValue = "✓ Up to date (\(latest.tagName))"
+                        self.updateBanner.stringValue = "✓ Up to date (v\(currentApp))"
                         self.updateNowButton.isHidden = true
                         self.viewNotesButton.isHidden = false
                         if !silent {
@@ -1425,10 +1425,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Release Notes Sheet Modal
 
     func showReleaseNotesSheet(releases: [GitHubRelease]) {
-        let installed = getInstalledVersion() ?? getAppVersion()
-        let installedSem = SemanticVersion(installed)
+        let currentApp = getAppVersion()
+        let currentAppSem = SemanticVersion(currentApp)
 
-        var targetReleases = releases.filter { SemanticVersion($0.tagName) >= installedSem }
+        var targetReleases = releases.filter { SemanticVersion($0.tagName) >= currentAppSem }
         if targetReleases.isEmpty {
             targetReleases = releases
         }
@@ -1443,11 +1443,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         header.font = .boldSystemFont(ofSize: 18)
 
         let subtitleText: String
-        let latestSem = releases.first.map { SemanticVersion($0.tagName) } ?? installedSem
-        if latestSem > installedSem {
-            subtitleText = "Showing updates from your installed version (\(installed)) to latest (\(releases.first?.tagName ?? "")):"
+        let latestSem = releases.first.map { SemanticVersion($0.tagName) } ?? currentAppSem
+        if latestSem > currentAppSem {
+            subtitleText = "Showing updates from your version (\(currentApp)) to latest (\(releases.first?.tagName ?? "")):"
         } else {
-            subtitleText = "You are on the latest version (\(installed)). Release history:"
+            subtitleText = "You are on the latest version (\(currentApp)). Release history:"
         }
         let subtitle = NSTextField(wrappingLabelWithString: subtitleText)
         subtitle.font = .systemFont(ofSize: 12)
@@ -1469,7 +1469,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         textView.isSelectable = true
         textView.drawsBackground = false
         textView.textContainerInset = NSSize(width: 14, height: 14)
-        textView.textStorage?.setAttributedString(buildReleaseNotesAttributedString(releases: targetReleases, installed: installed))
+        textView.textStorage?.setAttributedString(buildReleaseNotesAttributedString(releases: targetReleases, installed: currentApp))
         scrollView.documentView = textView
 
         let closeButton = NSButton(title: "Close", target: self, action: #selector(closeSheetAction(_:)))
@@ -1477,7 +1477,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         closeButton.keyEquivalent = "\r"
 
         var bottomViews: [NSView] = []
-        if latestSem > installedSem, let latestRelease = releases.first {
+        if latestSem > currentAppSem, let latestRelease = releases.first {
             let updateButton = NSButton(title: "Update to \(latestRelease.tagName)", target: self, action: #selector(performInAppUpdateAction(_:)))
             updateButton.bezelStyle = .rounded
             updateButton.keyEquivalent = "\r"
@@ -1698,6 +1698,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if FileManager.default.fileExists(atPath: userLayout.path) && FileManager.default.fileExists(atPath: bundledKeylayout.path) {
             try? FileManager.default.removeItem(at: userLayout)
             try? FileManager.default.copyItem(at: bundledKeylayout, to: userLayout)
+            UserDefaults.standard.removeObject(forKey: installedVersionDefaultsKey)
         }
 
         DispatchQueue.main.async {
