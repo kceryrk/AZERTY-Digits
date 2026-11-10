@@ -271,8 +271,8 @@ final class AppleKeyboardPreviewView: NSView {
             let isHighlighted: Bool
         }
 
-        let sym6 = "-"
-        let sym8 = "_"
+        let sym6 = isPC ? "-" : "§"
+        let sym8 = isPC ? "_" : "!"
 
         let base24 = isPC ? "=" : (underscore ? "_" : "-")
         let shift24 = isPC ? "+" : (underscore ? "_" : "_")
