@@ -75,11 +75,11 @@
 
 ### Option 2 : Terminal / Script Shell
 ```bash
-./install.sh install              # Installer pour l'utilisateur actuel (~/Library/Keyboard Layouts)
-./install.sh install --all-users  # Installer pour tous les utilisateurs / Écran de verrouillage (/Library)
-./install.sh update               # Mettre à jour la disposition
-./install.sh uninstall            # Désinstaller
-./install.sh status               # Vérifier l'état de l'installation
+./src/install.sh install              # Installer pour l'utilisateur actuel (~/Library/Keyboard Layouts)
+./src/install.sh install --all-users  # Installer pour tous les utilisateurs / Écran de verrouillage (/Library)
+./src/install.sh update               # Mettre à jour la disposition
+./src/install.sh uninstall            # Désinstaller
+./src/install.sh status               # Vérifier l'état de l'installation
 ```
 
 > [!NOTE]

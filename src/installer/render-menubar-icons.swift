@@ -131,14 +131,6 @@ for (name, text) in styles {
         let icnsPath = "\(outDir)/\(name)\(suffix).icns"
         try! icnsData.write(to: URL(fileURLWithPath: icnsPath))
 
-        let set = "\(outDir)/\(name)\(suffix).iconset"
-        try? fm.removeItem(atPath: set)
-        try! fm.createDirectory(atPath: set, withIntermediateDirectories: true)
-        try! p16.write(to: URL(fileURLWithPath: "\(set)/icon_16x16.png"))
-        try! p32.write(to: URL(fileURLWithPath: "\(set)/icon_16x16@2x.png"))
-        try! p32.write(to: URL(fileURLWithPath: "\(set)/icon_32x32.png"))
-        try! p128.write(to: URL(fileURLWithPath: "\(set)/icon_128x128.png"))
-        try! p256.write(to: URL(fileURLWithPath: "\(set)/icon_128x128@2x.png"))
     }
 }
 
