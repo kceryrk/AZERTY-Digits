@@ -24,17 +24,32 @@
 ## Screenshots & Preview
 
 <p align="center">
-  <img src="media/installer-preview.png" alt="AZERTY Digits Installer Preview" width="680" />
+  <img src="media/installer-preview.png" alt="AZERTY Digits Installer" width="680" /><br>
+  <em><b>AZERTY Digits Installer:</b> Modern Apple-style GUI with live keyboard layout preview, instant country variant picker, dark icon toggle, and one-click install/update.</em>
 </p>
 
+<br>
+
 <p align="center">
-  <img src="media/menubar-badge-preview.png" alt="macOS Menu Bar Input Badge" width="320" />
+  <img src="media/menubar-badge-preview.png" alt="macOS Menu Bar Input Badge" width="340" /><br>
+  <em><b>Menu Bar Integration:</b> Seamless Apple-native badge with transparent cutout letters matching your macOS appearance.</em>
 </p>
+
+<br>
 
 <p align="center">
   <img src="media/menubar-icon-styles.png" alt="Menu Bar Badges and Single Letter Styles" width="340" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="media/custom-layout-converter.png" alt="Custom Layout Exporter & Converter" width="340" />
+  <img src="media/custom-layout-converter.png" alt="Custom Layout Exporter & Converter" width="340" /><br>
+  <em><b>Left:</b> Comprehensive badge choices (1-letter, 2-letter, numeric, or terminal app icon).<br>
+  <b>Right:</b> Built-in Layout Exporter to convert any existing macOS keyboard layout to direct digits.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="media/macos-shortcuts-number-keys.png" alt="macOS System Shortcuts with Numbers" width="620" /><br>
+  <em><b>Intuitive Shortcuts:</b> macOS system shortcuts (e.g. Screenshot <code>Cmd+Shift+3</code>, <code>Cmd+Shift+4</code>) display the actual digits directly (<code>3</code>, <code>4</code>) instead of symbols (<code>"</code>, <code>'</code>), making system key combinations far more intuitive and easier to remember.</em>
 </p>
 
 ---
