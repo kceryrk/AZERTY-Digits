@@ -228,6 +228,227 @@ let baseFlavors = [
     BaseFlavor(name: "French – PC (Français - PC)", filename: "French-PC.keylayout", defaultIconIndex: 7),
 ]
 
+// MARK: - Apple-Style Keyboard Preview
+
+final class AppleKeyboardPreviewView: NSView {
+    var flavorIndex: Int = 0 // 0: Belgian, 1: French, 2: French-PC
+    var underscore: Bool = false
+    var degree: Bool = true
+
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
+        // Background container in Apple's subtle gray keyboard recessed well style
+        let bgPath = NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8)
+        let bgColor = isDark
+            ? NSColor(white: 0.12, alpha: 0.85)
+            : NSColor(white: 0.94, alpha: 0.95)
+        bgColor.setFill()
+        bgPath.fill()
+
+        let borderColor = isDark
+            ? NSColor(white: 0.25, alpha: 0.5)
+            : NSColor(white: 0.78, alpha: 0.8)
+        borderColor.setStroke()
+        bgPath.lineWidth = 1
+        bgPath.stroke()
+
+        let padX: CGFloat = 6
+        let padY: CGFloat = 5
+        let gap: CGFloat = 2.5
+        let rows = 5
+        let totalW = bounds.width - padX * 2
+        let totalH = bounds.height - padY * 2
+        let rowH = (totalH - CGFloat(rows - 1) * gap) / CGFloat(rows)
+
+        struct KeyDef {
+            let labelTop: String?
+            let labelBottom: String
+            let widthUnits: CGFloat
+            let isHighlighted: Bool
+        }
+
+        let sym6: String
+        let sym8: String
+        if flavorIndex == 0 {
+            sym6 = "§"; sym8 = "!"
+        } else {
+            sym6 = "-"; sym8 = "_"
+        }
+
+        let base24 = underscore ? "_" : (flavorIndex == 2 ? "=" : "-")
+        let shift24 = underscore ? "_" : (flavorIndex == 2 ? "+" : "_")
+        let base27 = degree ? "°" : ")"
+        let shift27 = degree ? ")" : "°"
+
+        let row1: [KeyDef] = [
+            KeyDef(labelTop: nil, labelBottom: "@", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "&", labelBottom: "1", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "é", labelBottom: "2", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "\"", labelBottom: "3", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "'", labelBottom: "4", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "(", labelBottom: "5", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: sym6, labelBottom: "6", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "è", labelBottom: "7", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: sym8, labelBottom: "8", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "ç", labelBottom: "9", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: "à", labelBottom: "0", widthUnits: 1.0, isHighlighted: true),
+            KeyDef(labelTop: shift27, labelBottom: base27, widthUnits: 1.0, isHighlighted: degree),
+            KeyDef(labelTop: shift24, labelBottom: base24, widthUnits: 1.0, isHighlighted: underscore),
+            KeyDef(labelTop: nil, labelBottom: "⌫", widthUnits: 1.0, isHighlighted: false),
+        ]
+
+        let row2: [KeyDef] = [
+            KeyDef(labelTop: nil, labelBottom: "⇥", widthUnits: 1.4, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "A", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "Z", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "E", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "R", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "T", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "Y", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "U", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "I", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "O", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "P", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "¨", labelBottom: "^", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "*", labelBottom: "$", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "`", widthUnits: 0.6, isHighlighted: false),
+        ]
+
+        let row3: [KeyDef] = [
+            KeyDef(labelTop: nil, labelBottom: "⇪", widthUnits: 1.7, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "Q", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "S", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "D", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "F", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "G", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "H", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "J", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "K", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "L", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "M", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "%", labelBottom: "ù", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "↩", widthUnits: 1.3, isHighlighted: false),
+        ]
+
+        let row4: [KeyDef] = [
+            KeyDef(labelTop: nil, labelBottom: "⇧", widthUnits: 1.25, isHighlighted: false),
+            KeyDef(labelTop: ">", labelBottom: "<", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "W", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "X", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "C", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "V", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "B", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "N", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "?", labelBottom: ",", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: ".", labelBottom: ";", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: "/", labelBottom: ":", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "=", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⇧", widthUnits: 1.75, isHighlighted: false),
+        ]
+
+        let row5: [KeyDef] = [
+            KeyDef(labelTop: nil, labelBottom: "fn", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⌃", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⌥", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⌘", widthUnits: 1.25, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "", widthUnits: 5.5, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⌘", widthUnits: 1.25, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "⌥", widthUnits: 1.0, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "◀", widthUnits: 0.65, isHighlighted: false),
+            KeyDef(labelTop: "▲", labelBottom: "▼", widthUnits: 0.7, isHighlighted: false),
+            KeyDef(labelTop: nil, labelBottom: "▶", widthUnits: 0.65, isHighlighted: false),
+        ]
+
+        let allRows = [row1, row2, row3, row4, row5]
+
+        var curY = padY
+        for row in allRows {
+            var curX = padX
+            let totalUnitsInRow = row.reduce(0.0) { $0 + $1.widthUnits }
+            let availableW = totalW - CGFloat(row.count - 1) * gap
+            let rowUnitW = availableW / totalUnitsInRow
+
+            for key in row {
+                let kW = key.widthUnits * rowUnitW
+                let keyRect = NSRect(x: curX, y: curY, width: kW, height: rowH)
+                let keyPath = NSBezierPath(roundedRect: keyRect, xRadius: 3.5, yRadius: 3.5)
+
+                if key.isHighlighted {
+                    let accentFill = NSColor.controlAccentColor.withAlphaComponent(isDark ? 0.28 : 0.18)
+                    accentFill.setFill()
+                    keyPath.fill()
+
+                    let accentBorder = NSColor.controlAccentColor.withAlphaComponent(isDark ? 0.9 : 0.8)
+                    accentBorder.setStroke()
+                    keyPath.lineWidth = 1.2
+                    keyPath.stroke()
+                } else {
+                    let normalFill = isDark
+                        ? NSColor(white: 0.22, alpha: 1.0)
+                        : NSColor.white
+                    normalFill.setFill()
+                    keyPath.fill()
+
+                    let normalBorder = isDark
+                        ? NSColor(white: 0.30, alpha: 0.7)
+                        : NSColor(white: 0.82, alpha: 1.0)
+                    normalBorder.setStroke()
+                    keyPath.lineWidth = 0.5
+                    keyPath.stroke()
+                }
+
+                // Draw labels
+                if let top = key.labelTop {
+                    let topColor = key.isHighlighted
+                        ? (isDark ? NSColor.controlAccentColor.blended(withFraction: 0.3, of: .white)! : NSColor.controlAccentColor)
+                        : (isDark ? NSColor(white: 0.65, alpha: 1.0) : NSColor(white: 0.5, alpha: 1.0))
+                    let topAttrs: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.systemFont(ofSize: 8, weight: .regular),
+                        .foregroundColor: topColor
+                    ]
+                    let topSize = top.size(withAttributes: topAttrs)
+                    let topPt = NSPoint(x: keyRect.midX - topSize.width / 2, y: keyRect.minY + 1.5)
+                    top.draw(at: topPt, withAttributes: topAttrs)
+
+                    let botColor = key.isHighlighted
+                        ? (isDark ? NSColor.white : NSColor.controlAccentColor)
+                        : (isDark ? NSColor(white: 0.92, alpha: 1.0) : NSColor(white: 0.15, alpha: 1.0))
+                    let botAttrs: [NSAttributedString.Key: Any] = [
+                        .font: NSFont.systemFont(ofSize: 9.5, weight: key.isHighlighted ? .bold : .medium),
+                        .foregroundColor: botColor
+                    ]
+                    let botSize = key.labelBottom.size(withAttributes: botAttrs)
+                    let botPt = NSPoint(x: keyRect.midX - botSize.width / 2, y: keyRect.maxY - botSize.height - 1.5)
+                    key.labelBottom.draw(at: botPt, withAttributes: botAttrs)
+                } else if !key.labelBottom.isEmpty {
+                    let botColor = key.isHighlighted
+                        ? (isDark ? NSColor.white : NSColor.controlAccentColor)
+                        : (isDark ? NSColor(white: 0.85, alpha: 1.0) : NSColor(white: 0.2, alpha: 1.0))
+                    let font: NSFont
+                    if key.labelBottom.count > 1 && !["fn", "⌃", "⌥", "⌘", "⇪", "⇧", "⌫", "⇥", "↩"].contains(key.labelBottom) {
+                        font = NSFont.systemFont(ofSize: 7.5, weight: .medium)
+                    } else {
+                        font = NSFont.systemFont(ofSize: 9.5, weight: .medium)
+                    }
+                    let attrs: [NSAttributedString.Key: Any] = [
+                        .font: font,
+                        .foregroundColor: botColor
+                    ]
+                    let size = key.labelBottom.size(withAttributes: attrs)
+                    let pt = NSPoint(x: keyRect.midX - size.width / 2, y: keyRect.midY - size.height / 2)
+                    key.labelBottom.draw(at: pt, withAttributes: attrs)
+                }
+
+                curX += kW + gap
+            }
+            curY += rowH + gap
+        }
+    }
+}
+
 // MARK: - App Delegate
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -237,6 +458,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let iconPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     let flavorPopup = NSPopUpButton(frame: .zero, pullsDown: false)
     let iconPreview = NSImageView()
+    let keyboardPreview = AppleKeyboardPreviewView()
     var toggleAllUsers: NSButton!
     var toggleUnderscore: NSButton!
     var toggleDegree: NSButton!
@@ -319,6 +541,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             ? UserDefaults.standard.integer(forKey: menuBarDefaultsKey)
             : defaultIcon
         selectMenuBarStyle(index: savedIcon)
+        keyboardPreview.flavorIndex = lastSelectedFlavorIndex
+        keyboardPreview.underscore = toggleUnderscore.state == .on
+        keyboardPreview.degree = toggleDegree.state == .on
+        keyboardPreview.needsDisplay = true
         refreshStatus()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -346,7 +572,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func buildWindow() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 740),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 865),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -408,6 +634,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         flavorRow.spacing = 8
         flavorRow.alignment = .centerY
 
+        // Apple-style Keyboard Layout Preview
+        keyboardPreview.translatesAutoresizingMaskIntoConstraints = false
+
+        let previewLegend = NSTextField(wrappingLabelWithString:
+            "Highlighted keys type digits by default without Shift. Hold Shift to access standard symbols.")
+        previewLegend.font = .systemFont(ofSize: 11)
+        previewLegend.textColor = .secondaryLabelColor
+        previewLegend.preferredMaxLayoutWidth = 440
+
         // Install for all users (placed right below Layout picker)
         UserDefaults.standard.register(defaults: [allUsersDefaultsKey: false])
         toggleAllUsers = NSButton(
@@ -448,6 +683,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let optionsStack = NSStackView(views: [
             optionsTitle,
             flavorRow,
+            keyboardPreview,
+            previewLegend,
             toggleAllUsers, allUsersHelp,
             toggleUnderscore, underscoreHelp,
             toggleDegree, degreeHelp
@@ -522,8 +759,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 18, left: 24, bottom: 18, right: 24)
+        stack.spacing = 8
+        stack.edgeInsets = NSEdgeInsets(top: 16, left: 24, bottom: 16, right: 24)
         stack.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(stack)
 
@@ -534,6 +771,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
             iconPreview.widthAnchor.constraint(equalToConstant: 76),
             iconPreview.heightAnchor.constraint(equalToConstant: 76),
+            keyboardPreview.widthAnchor.constraint(equalToConstant: 450),
+            keyboardPreview.heightAnchor.constraint(equalToConstant: 122),
             subtitle.widthAnchor.constraint(equalToConstant: 450),
             sep1.widthAnchor.constraint(equalToConstant: 450),
             sep2.widthAnchor.constraint(equalToConstant: 450),
@@ -602,6 +841,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let self = self else { return }
             self.refreshMenuBarStyleItems()
             self.syncInstalledIconIfNeeded()
+            self.keyboardPreview.needsDisplay = true
         }
     }
 
@@ -630,6 +870,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             UserDefaults.standard.set(idx, forKey: baseLayoutDefaultsKey)
             let recommendedIcon = selectedFlavor.defaultIconIndex
             selectMenuBarStyle(index: recommendedIcon)
+            keyboardPreview.flavorIndex = idx
+            keyboardPreview.needsDisplay = true
             setStatus("Selected layout: \(selectedFlavor.name). Click Install/Update to apply.")
         } else {
             // "Other Layout..." selected: restore previous selection in popup and open exporter sheet
@@ -649,8 +891,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc func toggleChanged() {
-        UserDefaults.standard.set(toggleUnderscore.state == .on, forKey: underscoreDefaultsKey)
-        UserDefaults.standard.set(toggleDegree.state == .on, forKey: degreeDefaultsKey)
+        let under = toggleUnderscore.state == .on
+        let deg = toggleDegree.state == .on
+        UserDefaults.standard.set(under, forKey: underscoreDefaultsKey)
+        UserDefaults.standard.set(deg, forKey: degreeDefaultsKey)
+        keyboardPreview.underscore = under
+        keyboardPreview.degree = deg
+        keyboardPreview.needsDisplay = true
         setStatus("Click Update to apply the new symbols.")
     }
 
