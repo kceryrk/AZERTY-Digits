@@ -237,6 +237,11 @@ final class AppleKeyboardPreviewView: NSView {
 
     override var isFlipped: Bool { true }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        needsDisplay = true
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let isPC = (flavorIndex == 2)
@@ -397,27 +402,31 @@ final class AppleKeyboardPreviewView: NSView {
                     keyPath.stroke()
                 }
 
+                let fontScale = max(0.85, min(1.8, rowH / 22.0))
+                let topFontSize = 7.5 * fontScale
+                let botFontSize = 9.5 * fontScale
+
                 // Draw labels: Shift character at top-left
                 if let top = key.labelTop {
                     let topColor = key.isHighlighted
                         ? (isDark ? NSColor.controlAccentColor.blended(withFraction: 0.3, of: .white)! : NSColor.controlAccentColor)
                         : (isDark ? NSColor(white: 0.65, alpha: 1.0) : NSColor(white: 0.5, alpha: 1.0))
                     let topAttrs: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 7.5, weight: .regular),
+                        .font: NSFont.systemFont(ofSize: topFontSize, weight: .regular),
                         .foregroundColor: topColor
                     ]
-                    let topPt = NSPoint(x: keyRect.minX + 3.0, y: keyRect.minY + 1.5)
+                    let topPt = NSPoint(x: keyRect.minX + 3.0 * fontScale, y: keyRect.minY + 1.5 * fontScale)
                     top.draw(at: topPt, withAttributes: topAttrs)
 
                     let botColor = key.isHighlighted
                         ? (isDark ? NSColor.white : NSColor.controlAccentColor)
                         : (isDark ? NSColor(white: 0.92, alpha: 1.0) : NSColor(white: 0.15, alpha: 1.0))
                     let botAttrs: [NSAttributedString.Key: Any] = [
-                        .font: NSFont.systemFont(ofSize: 9.5, weight: key.isHighlighted ? .bold : .medium),
+                        .font: NSFont.systemFont(ofSize: botFontSize, weight: key.isHighlighted ? .bold : .medium),
                         .foregroundColor: botColor
                     ]
                     let botSize = key.labelBottom.size(withAttributes: botAttrs)
-                    let botPt = NSPoint(x: keyRect.midX - botSize.width / 2, y: keyRect.maxY - botSize.height - 1.5)
+                    let botPt = NSPoint(x: keyRect.midX - botSize.width / 2, y: keyRect.maxY - botSize.height - 1.5 * fontScale)
                     key.labelBottom.draw(at: botPt, withAttributes: botAttrs)
                 } else if !key.labelBottom.isEmpty {
                     let botColor = key.isHighlighted
@@ -425,9 +434,9 @@ final class AppleKeyboardPreviewView: NSView {
                         : (isDark ? NSColor(white: 0.85, alpha: 1.0) : NSColor(white: 0.2, alpha: 1.0))
                     let font: NSFont
                     if key.labelBottom.count > 1 && !["fn", "⌃", "⌥", "⌘", "⇪", "⇧", "⌫", "⇥", "↩"].contains(key.labelBottom) {
-                        font = NSFont.systemFont(ofSize: 7.5, weight: .medium)
+                        font = NSFont.systemFont(ofSize: topFontSize, weight: .medium)
                     } else {
-                        font = NSFont.systemFont(ofSize: 9.5, weight: .medium)
+                        font = NSFont.systemFont(ofSize: botFontSize, weight: .medium)
                     }
                     let attrs: [NSAttributedString.Key: Any] = [
                         .font: font,
@@ -633,7 +642,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let flavorLabel = NSTextField(labelWithString: "Layout:")
         flavorLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        let flavorRow = NSStackView(views: [flavorLabel, flavorPopup])
+        let flavorRow = NSStackView(views: [flavorLabel, flavorPopup, NSView()])
         flavorRow.spacing = 8
         flavorRow.alignment = .centerY
 
@@ -644,7 +653,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "Highlighted keys type digits by default without Shift. Hold Shift to access standard symbols.")
         previewLegend.font = .systemFont(ofSize: 11)
         previewLegend.textColor = .secondaryLabelColor
-        previewLegend.preferredMaxLayoutWidth = 440
 
         // Install for all users (placed right below Layout picker)
         UserDefaults.standard.register(defaults: [allUsersDefaultsKey: false])
@@ -663,7 +671,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         allUsersHelp.font = .systemFont(ofSize: 11)
         allUsersHelp.textColor = .secondaryLabelColor
-        allUsersHelp.preferredMaxLayoutWidth = 440
 
         // Checkboxes Section
         UserDefaults.standard.register(defaults: [underscoreDefaultsKey: false, degreeDefaultsKey: true])
@@ -677,7 +684,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         for help in [underscoreHelp, degreeHelp] {
             help.font = .systemFont(ofSize: 11)
             help.textColor = .secondaryLabelColor
-            help.preferredMaxLayoutWidth = 440
         }
 
         let optionsTitle = NSTextField(labelWithString: "Layout Options")
@@ -714,7 +720,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         uninstall.bezelStyle = .rounded
         install.keyEquivalent = "\r"
 
-        let buttons = NSStackView(views: [install, update, uninstall])
+        let buttons = NSStackView(views: [install, update, uninstall, NSView()])
         buttons.spacing = 10
 
         // Secondary Buttons (Row 2)
@@ -727,12 +733,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let supportButton = NSButton(title: "☕ Support on Ko-fi", target: self, action: #selector(supportAction))
         supportButton.bezelStyle = .rounded
 
-        let extraButtons = NSStackView(views: [settings, checkUpdatesButton, supportButton])
+        let extraButtons = NSStackView(views: [settings, checkUpdatesButton, supportButton, NSView()])
         extraButtons.spacing = 8
 
         // Status & Update Info
         statusLabel.font = .systemFont(ofSize: 12)
-        statusLabel.preferredMaxLayoutWidth = 440
 
         viewNotesButton = NSButton(title: "Release Notes", target: self, action: #selector(viewNotesAction))
         viewNotesButton.bezelStyle = .inline
@@ -741,7 +746,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         updateBanner.font = .systemFont(ofSize: 11)
         updateBanner.textColor = .secondaryLabelColor
 
-        let updateRow = NSStackView(views: [updateBanner, viewNotesButton])
+        let updateRow = NSStackView(views: [updateBanner, viewNotesButton, NSView()])
         updateRow.spacing = 8
         updateRow.alignment = .centerY
 
@@ -750,7 +755,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "💡 Next steps: After install or update, log out and back in, then add AZERTY Digits in System Settings > Keyboard > Input Sources (+ > Others). macOS doesn't let apps add input sources for you.")
         steps.font = .systemFont(ofSize: 11)
         steps.textColor = .secondaryLabelColor
-        steps.preferredMaxLayoutWidth = 440
 
         let sep1 = makeSeparator()
         let sep2 = makeSeparator()
@@ -787,16 +791,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             stack.topAnchor.constraint(equalTo: content.topAnchor),
             bottomEqual,
             bottomLess,
+            subtitle.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            subtitle.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            sep1.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            sep1.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            sep2.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            sep2.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            optionsStack.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            optionsStack.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            keyboardPreview.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            keyboardPreview.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            keyboardPreview.heightAnchor.constraint(equalTo: keyboardPreview.widthAnchor, multiplier: 122.0 / 450.0),
+            previewLegend.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            previewLegend.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            allUsersHelp.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            allUsersHelp.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            optSep1.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            optSep1.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            underscoreHelp.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            underscoreHelp.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            optSep2.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            optSep2.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            degreeHelp.leadingAnchor.constraint(equalTo: optionsStack.leadingAnchor),
+            degreeHelp.trailingAnchor.constraint(equalTo: optionsStack.trailingAnchor),
+            statusLabel.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            statusLabel.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            sep3.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            sep3.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
+            steps.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            steps.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
             iconPreview.widthAnchor.constraint(equalToConstant: 76),
             iconPreview.heightAnchor.constraint(equalToConstant: 76),
-            keyboardPreview.widthAnchor.constraint(equalToConstant: 450),
-            keyboardPreview.heightAnchor.constraint(equalToConstant: 122),
-            subtitle.widthAnchor.constraint(equalToConstant: 450),
-            sep1.widthAnchor.constraint(equalToConstant: 450),
-            sep2.widthAnchor.constraint(equalToConstant: 450),
-            optSep1.widthAnchor.constraint(equalToConstant: 450),
-            optSep2.widthAnchor.constraint(equalToConstant: 450),
-            sep3.widthAnchor.constraint(equalToConstant: 450),
             iconPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 220),
         ])
 
@@ -816,7 +841,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.setFrame(frame, display: true, animate: animate)
         }
         window.minSize = NSSize(width: 480, height: frameHeight)
-        window.maxSize = NSSize(width: 800, height: 2000)
+        window.maxSize = NSSize(width: 1200, height: 2000)
     }
 
     var isSystemDark: Bool {
