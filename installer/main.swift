@@ -223,8 +223,8 @@ struct BaseFlavor {
 }
 
 let baseFlavors = [
-    BaseFlavor(name: "Belgian (Belge)", filename: "Belgian.keylayout", defaultIconIndex: 1),
-    BaseFlavor(name: "French (France)", filename: "French.keylayout", defaultIconIndex: 0),
+    BaseFlavor(name: "Belgian – Apple Layout (Belge)", filename: "Belgian.keylayout", defaultIconIndex: 1),
+    BaseFlavor(name: "French – Apple Layout (France)", filename: "French.keylayout", defaultIconIndex: 0),
     BaseFlavor(name: "French – PC (Français - PC)", filename: "French-PC.keylayout", defaultIconIndex: 7),
 ]
 
