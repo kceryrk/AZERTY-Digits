@@ -458,6 +458,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var toggleAllUsers: NSButton!
     var toggleUnderscore: NSButton!
     var toggleDegree: NSButton!
+    var optSep1: NSBox!
+    var optSep2: NSBox!
     var checkUpdatesButton: NSButton!
     var viewNotesButton: NSButton!
 
@@ -544,7 +546,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let isPC = (lastSelectedFlavorIndex == 2)
         toggleUnderscore.isHidden = isPC
         underscoreHelp.isHidden = isPC
+        optSep2.isHidden = isPC
         refreshStatus()
+        updateWindowHeight(animate: false)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
@@ -572,7 +576,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func buildWindow() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 865),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -679,18 +683,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let optionsTitle = NSTextField(labelWithString: "Layout Options")
         optionsTitle.font = .systemFont(ofSize: 13, weight: .semibold)
 
+        optSep1 = makeSeparator()
+        optSep2 = makeSeparator()
+
         let optionsStack = NSStackView(views: [
             optionsTitle,
             flavorRow,
             keyboardPreview,
             previewLegend,
             toggleAllUsers, allUsersHelp,
+            optSep1,
             toggleUnderscore, underscoreHelp,
+            optSep2,
             toggleDegree, degreeHelp
         ])
         optionsStack.orientation = .vertical
         optionsStack.alignment = .leading
         optionsStack.spacing = 6
+        optionsStack.setCustomSpacing(10, after: allUsersHelp)
+        optionsStack.setCustomSpacing(10, after: optSep1)
+        optionsStack.setCustomSpacing(10, after: underscoreHelp)
+        optionsStack.setCustomSpacing(10, after: optSep2)
 
         // Action Buttons (Row 1)
         let install = NSButton(title: "Install", target: self, action: #selector(installAction))
@@ -763,11 +776,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stack.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(stack)
 
+        let bottomEqual = stack.bottomAnchor.constraint(equalTo: content.bottomAnchor)
+        bottomEqual.priority = .defaultLow
+        let bottomLess = stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor)
+        bottomLess.priority = .required
+
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             stack.topAnchor.constraint(equalTo: content.topAnchor),
-            stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            bottomEqual,
+            bottomLess,
             iconPreview.widthAnchor.constraint(equalToConstant: 76),
             iconPreview.heightAnchor.constraint(equalToConstant: 76),
             keyboardPreview.widthAnchor.constraint(equalToConstant: 450),
@@ -775,11 +794,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             subtitle.widthAnchor.constraint(equalToConstant: 450),
             sep1.widthAnchor.constraint(equalToConstant: 450),
             sep2.widthAnchor.constraint(equalToConstant: 450),
+            optSep1.widthAnchor.constraint(equalToConstant: 450),
+            optSep2.widthAnchor.constraint(equalToConstant: 450),
             sep3.widthAnchor.constraint(equalToConstant: 450),
             iconPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 220),
         ])
 
+        updateWindowHeight(animate: false)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    func updateWindowHeight(animate: Bool = false) {
+        window.layoutIfNeeded()
+        let fittingSize = window.contentView?.fittingSize ?? NSSize(width: 500, height: 865)
+        let frameHeight = window.frameRect(forContentRect: NSRect(origin: .zero, size: fittingSize)).height
+        var frame = window.frame
+        let diff = frameHeight - frame.height
+        if abs(diff) > 1 {
+            frame.origin.y -= diff
+            frame.size.height = frameHeight
+            window.setFrame(frame, display: true, animate: animate)
+        }
+        window.minSize = NSSize(width: 480, height: frameHeight)
+        window.maxSize = NSSize(width: 800, height: 2000)
     }
 
     var isSystemDark: Bool {
@@ -874,6 +911,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let isPC = (idx == 2)
             toggleUnderscore.isHidden = isPC
             underscoreHelp.isHidden = isPC
+            optSep2.isHidden = isPC
+            updateWindowHeight(animate: true)
             setStatus("Selected layout: \(selectedFlavor.name). Click Install/Update to apply.")
         } else {
             // "Other Layout..." selected: restore previous selection in popup and open exporter sheet
