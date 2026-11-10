@@ -35,27 +35,27 @@ func render(text: String, px: Int, isBlack: Bool) -> Data {
         NSColor.white.setFill()
     }
 
-    let boxSize = s * 0.94
-    let origin = (s - boxSize) / 2
-    let radius = boxSize * 0.25
+    let boxWidth = s
+    let boxHeight = s
+    let radius = boxHeight * 0.22
     let box = NSBezierPath(
-        roundedRect: NSRect(x: origin, y: origin, width: boxSize, height: boxSize),
+        roundedRect: NSRect(x: 0, y: 0, width: boxWidth, height: boxHeight),
         xRadius: radius, yRadius: radius)
     box.fill()
 
-    let probe = NSFont.systemFont(ofSize: 100, weight: .semibold)
+    let probe = NSFont.systemFont(ofSize: 100, weight: .bold)
     let capPerPoint = probe.capHeight / 100
-    let refSize = (boxSize * 0.49) / capPerPoint
-    let font = NSFont.systemFont(ofSize: refSize, weight: .semibold)
-    let textColor = isBlack ? NSColor.white : NSColor.black
-    let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: textColor]
+    let refSize = (boxHeight * 0.50) / capPerPoint
+    let font = NSFont.systemFont(ofSize: refSize, weight: .bold)
+    let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
     let natural = (text as NSString).size(withAttributes: attrs)
-    let maxTextWidth = boxSize * 0.88
+    let maxTextWidth = boxWidth * 0.84
     let scaleX = min(1, maxTextWidth / natural.width)
     let capY = (s - font.capHeight) / 2 + font.descender
 
     let cg = NSGraphicsContext.current!.cgContext
     cg.saveGState()
+    cg.setBlendMode(.clear)
     cg.translateBy(x: s / 2, y: 0)
     cg.scaleBy(x: scaleX, y: 1)
     cg.translateBy(x: -s / 2, y: 0)

@@ -589,7 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func getAppVersion() -> String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.1"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.2"
     }
 
     func getInstalledVersion() -> String? {
