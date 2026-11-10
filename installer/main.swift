@@ -1621,7 +1621,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             DispatchQueue.main.async {
                 if percent >= 0 {
                     progressBar.isIndeterminate = false
-                    progressBar.doubleValue = percent
+                    progressBar.doubleValue = percent * 0.70
                 } else {
                     progressBar.isIndeterminate = true
                     progressBar.startAnimation(nil)
@@ -1635,13 +1635,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 guard let self = self else { return }
                 switch result {
                 case .success(let downloadedZip):
-                    progressBar.isIndeterminate = true
-                    progressBar.startAnimation(nil)
-                    statusLabel.stringValue = "Extracting and installing update..."
+                    progressBar.isIndeterminate = false
+                    progressBar.doubleValue = 75.0
+                    statusLabel.stringValue = "Extracting update package (1/3)..."
                     cancelButton.isEnabled = false
 
                     DispatchQueue.global(qos: .userInitiated).async {
-                        self.applyUpdateAndRelaunch(zipURL: downloadedZip, sheet: sheet)
+                        self.applyUpdateAndRelaunch(zipURL: downloadedZip, sheet: sheet, progressBar: progressBar, statusLabel: statusLabel)
                     }
                 case .failure(let error):
                     if (error as NSError).code == NSURLErrorCancelled {
@@ -1657,17 +1657,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         downloader.startDownload(url: downloadURL)
     }
 
-    func applyUpdateAndRelaunch(zipURL: URL, sheet: NSWindow) {
+    func applyUpdateAndRelaunch(zipURL: URL, sheet: NSWindow, progressBar: NSProgressIndicator, statusLabel: NSTextField) {
         let tempDir = zipURL.deletingLastPathComponent()
         let extractDir = tempDir.appendingPathComponent("extracted")
         try? FileManager.default.createDirectory(at: extractDir, withIntermediateDirectories: true)
 
-        let ditto = Process()
-        ditto.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-        ditto.arguments = ["-xk", zipURL.path, extractDir.path]
+        let unzip = Process()
+        unzip.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        unzip.arguments = ["-q", "-o", zipURL.path, "-d", extractDir.path]
         do {
-            try ditto.run()
-            ditto.waitUntilExit()
+            try unzip.run()
+            unzip.waitUntilExit()
         } catch {
             DispatchQueue.main.async {
                 let alert = NSAlert(error: error)
@@ -1687,17 +1687,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
 
-        // Update installed keyboard layout if currently active
+        DispatchQueue.main.async {
+            progressBar.doubleValue = 90.0
+            statusLabel.stringValue = "Preparing new version (2/3)..."
+        }
+
+        // Update installed keyboard layout if currently active in user Library
         let userLayout = userInstalledURL
-        let systemLayout = systemInstalledURL
         let bundledKeylayout = newAppURL.appendingPathComponent("Contents/Resources/AZERTY-Digits.keylayout")
         if FileManager.default.fileExists(atPath: userLayout.path) && FileManager.default.fileExists(atPath: bundledKeylayout.path) {
             try? FileManager.default.removeItem(at: userLayout)
             try? FileManager.default.copyItem(at: bundledKeylayout, to: userLayout)
         }
-        if FileManager.default.fileExists(atPath: systemLayout.path) && FileManager.default.fileExists(atPath: bundledKeylayout.path) {
-            let cmd = "cp \"\(bundledKeylayout.path)\" \"\(systemLayout.path)\""
-            try? self.runAsAdmin(cmd)
+
+        DispatchQueue.main.async {
+            progressBar.doubleValue = 100.0
+            statusLabel.stringValue = "Relaunching AZERTY Digits (3/3)..."
         }
 
         let currentAppURL = Bundle.main.bundleURL
@@ -1711,7 +1716,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         TEMPDIR="\(tempDir.path)"
 
         while kill -0 "$PID" 2>/dev/null; do
-            sleep 0.1
+            sleep 0.05
         done
 
         rm -rf "$TARGET"
